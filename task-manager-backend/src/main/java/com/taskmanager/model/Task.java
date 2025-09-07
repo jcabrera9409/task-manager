@@ -100,6 +100,10 @@ public class Task extends PanacheEntityBase {
         return this.createdAt;
     }
 
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public LocalDateTime getUpdatedAt() {
         return this.updatedAt;
     }

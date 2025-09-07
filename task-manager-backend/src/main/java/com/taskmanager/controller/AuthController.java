@@ -31,10 +31,10 @@ public class AuthController {
     private static final Logger LOG = Logger.getLogger(AuthController.class);
 
     @Inject
-    IAuthService authService;
+    private IAuthService authService;
 
     @Inject
-    JsonWebToken jwt;
+    private JsonWebToken jwt;
 
     /**
      * Endpoint for registration
@@ -67,7 +67,7 @@ public class AuthController {
     }
 
     /**
-     * Endpoint de login
+     * Endpoint for login
      */
     @POST
     @Path("/login")
@@ -98,7 +98,7 @@ public class AuthController {
     }
 
     /**
-     * Endpoint de logout
+     * Endpoint for logout
      */
     @GET
     @Path("/logout")
