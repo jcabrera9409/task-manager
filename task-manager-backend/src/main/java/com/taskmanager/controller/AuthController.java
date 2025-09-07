@@ -134,7 +134,6 @@ public class AuthController {
         try {
             String userEmail = securityContext.getUserPrincipal().getName();
             String userName = jwt.getClaim("name");
-            // Convertir el userId de manera segura
             Object userIdObj = jwt.getClaim("userId");
             Integer userId = userIdObj instanceof Number ? ((Number) userIdObj).intValue() : null;
 
