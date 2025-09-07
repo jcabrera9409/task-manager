@@ -18,7 +18,7 @@ public abstract class CRUDImpl<T, ID> implements ICRUD<T, ID> {
     @Override
     @Transactional
     public T create(T t) {
-        LOG.info("Creating entity: " + t);
+        LOG.infof("Creating entity: %s", t);
         PanacheRepository<T> repo = this.getRepo();
         repo.persist(t);
         return t;
@@ -27,7 +27,7 @@ public abstract class CRUDImpl<T, ID> implements ICRUD<T, ID> {
     @Override
     @Transactional
     public T update(T t) {
-        LOG.info("Updating entity: " + t);
+        LOG.infof("Updating entity: %s", t);
         PanacheRepository<T> repo = this.getRepo();
         return repo.getEntityManager().merge(t);
     }
@@ -35,21 +35,21 @@ public abstract class CRUDImpl<T, ID> implements ICRUD<T, ID> {
     @Override
     @Transactional
     public void delete(ID id) {
-        LOG.info("Deleting entity with ID: " + id);
+        LOG.infof("Deleting entity with ID: %s", id);
         PanacheRepository<T> repo = this.getRepo();
         repo.delete("id", id);
     }
 
     @Override
     public Optional<T> findById(ID id) {
-        LOG.info("Finding entity with ID: " + id);
+        LOG.infof("Finding entity with ID: %s", id);
         PanacheRepository<T> repo = this.getRepo();
         return repo.findByIdOptional((Long)id);
     }
 
     @Override
     public List<T> findAll() {
-        LOG.info("Finding all entities");
+        LOG.infof("Finding all entities");
         PanacheRepository<T> repo = this.getRepo();
         return repo.listAll();
     }

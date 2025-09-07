@@ -90,7 +90,7 @@ public class TaskServiceImpl extends CRUDImpl<Task, Long> implements ITaskServic
         if (userObject.isEmpty()) {
             throw new IllegalArgumentException("User not found with email: " + userEmail);
         }
-        Optional<Task> taskObject = taskRepository.findByIdOptional(id);
+        Optional<Task> taskObject = super.findById(id);
         if (taskObject.isEmpty()) {
             throw new IllegalArgumentException("Task not found with id: " + id + " for user: " + userEmail);
         }
@@ -98,6 +98,18 @@ public class TaskServiceImpl extends CRUDImpl<Task, Long> implements ITaskServic
             throw new IllegalArgumentException("User is not the owner of the task");
         }
         return taskObject.get();
+    }
+
+    /**
+     * Delete task by id and user email
+     */
+
+    @Override
+    @Transactional
+    public void deleteByIdAndUserEmail(Long id, String userEmail) {
+        LOG.infof("Deleting task with id: %d for user: %s", id, userEmail);
+        Task task = findByIdAndUserEmail(id, userEmail);
+        super.delete(task.getId());
     }
 
     private boolean isUserOwnerOfTask(User user, Task task) {

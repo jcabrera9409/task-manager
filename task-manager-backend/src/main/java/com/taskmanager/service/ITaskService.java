@@ -15,4 +15,9 @@ public interface ITaskService extends ICRUD<Task, Long> {
      * Find task by id and user email
      */
     Task findByIdAndUserEmail(Long id, String userEmail);
+
+    /**
+     * Delete task by id and user email
+     */
+    void deleteByIdAndUserEmail(Long id, String userEmail);
 }

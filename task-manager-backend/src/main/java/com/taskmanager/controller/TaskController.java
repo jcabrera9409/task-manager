@@ -13,6 +13,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -152,6 +153,36 @@ public class TaskController {
             LOG.errorf(e, "Error getting task");
             APIResponseDTO<String> responseDTO = APIResponseDTO.error("Internal server error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(responseDTO)
+                    .build();
+        }
+    }
+
+    /**
+     * Endpoint for delete task by id and user email
+     */
+    @DELETE
+    @Path("/{id}")
+    @RolesAllowed("user")
+    public Response deleteTaskById(@Context SecurityContext securityContext, @PathParam("id") Long id) {
+        try {
+            String userEmail = securityContext.getUserPrincipal().getName();
+            LOG.infof("Request to delete task with id: %d for user: %s", id, userEmail);
+            taskService.deleteByIdAndUserEmail(id, userEmail);
+            APIResponseDTO<String> responseDTO = APIResponseDTO.success("Task deleted successfully", null, Response.Status.OK.getStatusCode());
+            return Response.status(Response.Status.OK)
+                    .entity(responseDTO)
+                    .build();
+        } catch (IllegalArgumentException e) {
+            LOG.errorf(e, "Error deleting task");
+            APIResponseDTO<String> responseDTO = APIResponseDTO.error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode());
+            return Response.status(Response.Status.NOT_FOUND)   
+                    .entity(responseDTO)
+                    .build();
+        } catch (Exception e) {
+            LOG.errorf(e, "Error deleting task");
+            APIResponseDTO<String> responseDTO = APIResponseDTO.error("Internal server error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)   
                     .entity(responseDTO)
                     .build();
         }

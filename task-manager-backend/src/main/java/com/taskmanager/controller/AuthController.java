@@ -1,6 +1,5 @@
 package com.taskmanager.controller;
 
-import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 
 import com.taskmanager.dto.APIResponseDTO;
@@ -32,9 +31,6 @@ public class AuthController {
 
     @Inject
     private IAuthService authService;
-
-    @Inject
-    private JsonWebToken jwt;
 
     /**
      * Endpoint for registration
@@ -104,6 +100,7 @@ public class AuthController {
     @Path("/logout")
     @RolesAllowed("user")
     public Response logout(@Context SecurityContext securityContext) {
+        LOG.infof("Logout request for: %s", securityContext.getUserPrincipal().getName());
         try {
             String userEmail = securityContext.getUserPrincipal().getName();
             authService.logout(userEmail);
@@ -122,55 +119,5 @@ public class AuthController {
                     .entity(responseDTO)
                     .build();
         }
-    }
-
-    /**
-     * Endpoint protegido de prueba
-     */
-    @GET
-    @Path("/profile")
-    @RolesAllowed("user")
-    public Response getProfile(@Context SecurityContext securityContext) {
-        try {
-            String userEmail = securityContext.getUserPrincipal().getName();
-            String userName = jwt.getClaim("name");
-            Object userIdObj = jwt.getClaim("userId");
-            Integer userId = userIdObj instanceof Number ? ((Number) userIdObj).intValue() : null;
-
-            LOG.infof("Acceso al perfil para usuario: %s", userEmail);
-
-            String response = String.format("{" +
-                    "\"message\": \"Acceso autorizado\"," +
-                    "\"user\": {" +
-                    "\"id\": %d," +
-                    "\"email\": \"%s\"," +
-                    "\"name\": \"%s\"" +
-                    "}," +
-                    "\"timestamp\": \"%s\"" +
-                    "}", userId, userEmail, userName, java.time.Instant.now());
-
-            return Response.ok(response).build();
-
-        } catch (Exception e) {
-            LOG.errorf(e, "Error accediendo al perfil");
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("{\"error\": \"Error interno del servidor\"}")
-                    .build();
-        }
-    }
-
-    /**
-     * Endpoint público de prueba
-     */
-    @GET
-    @Path("/public")
-    @PermitAll
-    public Response publicEndpoint() {
-        String response = String.format("{" +
-                "\"message\": \"Endpoint público funcionando\"," +
-                "\"timestamp\": \"%s\"" +
-                "}", java.time.Instant.now());
-
-        return Response.ok(response).build();
     }
 }
