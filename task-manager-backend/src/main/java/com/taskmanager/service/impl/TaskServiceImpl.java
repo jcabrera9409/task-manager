@@ -1,5 +1,6 @@
 package com.taskmanager.service.impl;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.jboss.logging.Logger;
@@ -33,7 +34,7 @@ public class TaskServiceImpl extends CRUDImpl<Task, Long> implements ITaskServic
     @Override 
     @Transactional
     public Task create(Task taskEntity) {
-        LOG.info("Creating a new task");
+        LOG.infof("Creating a new task");
         Optional<User> userObject = userRepository.findByEmail(taskEntity.getUser().getEmail());
         if (userObject.isEmpty()) {
             throw new IllegalArgumentException("User not found with email: " + taskEntity.getUser().getEmail());
@@ -64,6 +65,39 @@ public class TaskServiceImpl extends CRUDImpl<Task, Long> implements ITaskServic
         taskEntity.setCreatedAt(existingTask.get().getCreatedAt());
         taskEntity.setCompleted(existingTask.get().getCompleted());
         return super.update(taskEntity);
+    }
+
+    /**
+     * Find all tasks for a given user email
+     */
+    @Override
+    public List<Task> findAllByUser(String userEmail) {
+        LOG.infof("Finding all tasks for user: %s", userEmail);
+        Optional<User> userObject = userRepository.findByEmail(userEmail);
+        if (userObject.isEmpty()) {
+            throw new IllegalArgumentException("User not found with email: " + userEmail);
+        }
+        return taskRepository.findByUserId(userObject.get().getId());
+    }
+
+    /**
+     * Find task by id and user email
+     */
+    @Override
+    public Task findByIdAndUserEmail(Long id, String userEmail) {
+        LOG.infof("Finding task with id: %d for user: %s", id, userEmail);
+        Optional<User> userObject = userRepository.findByEmail(userEmail);
+        if (userObject.isEmpty()) {
+            throw new IllegalArgumentException("User not found with email: " + userEmail);
+        }
+        Optional<Task> taskObject = taskRepository.findByIdOptional(id);
+        if (taskObject.isEmpty()) {
+            throw new IllegalArgumentException("Task not found with id: " + id + " for user: " + userEmail);
+        }
+        if (!isUserOwnerOfTask(userObject.get(), taskObject.get())) {
+            throw new IllegalArgumentException("User is not the owner of the task");
+        }
+        return taskObject.get();
     }
 
     private boolean isUserOwnerOfTask(User user, Task task) {

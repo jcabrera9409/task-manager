@@ -1,5 +1,7 @@
 package com.taskmanager.controller;
 
+import java.util.List;
+
 import org.jboss.logging.Logger;
 
 import com.taskmanager.dto.APIResponseDTO;
@@ -11,9 +13,11 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
@@ -46,6 +50,13 @@ public class TaskController {
             return Response.status(Response.Status.CREATED)
                     .entity(responseDTO)
                     .build();
+        } catch (IllegalArgumentException e) {
+            LOG.errorf(e, "Error creating task");
+            APIResponseDTO<String> responseDTO = APIResponseDTO.error(e.getMessage(), Response.Status
+                    .BAD_REQUEST.getStatusCode());  
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(responseDTO)
+                    .build();
         } catch (Exception e) {
             LOG.errorf(e, "Error creating task");
             APIResponseDTO<String> responseDTO = APIResponseDTO.error("Internal server error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
@@ -55,6 +66,9 @@ public class TaskController {
         }
     }
 
+    /**
+     * Endpoint for update task
+     */
     @PUT
     @RolesAllowed("user")
     public Response updateTask(@Context SecurityContext securityContext, @Valid Task task) {
@@ -69,6 +83,12 @@ public class TaskController {
             return Response.status(Response.Status.OK)
                     .entity(responseDTO)
                     .build();
+        } catch (IllegalArgumentException e) {
+            LOG.errorf(e, "Error updating task");
+            APIResponseDTO<String> responseDTO = APIResponseDTO.error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode());
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(responseDTO)
+                    .build();
         } catch (Exception e) {
             LOG.errorf(e, "Error updating task");
             APIResponseDTO<String> responseDTO = APIResponseDTO.error("Internal server error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
@@ -76,6 +96,64 @@ public class TaskController {
                     .entity(responseDTO)
                     .build();
         }
-    
+    }
+
+    /**
+     * Endpoint for get all tasks for the authenticated user
+     */
+    @GET
+    @RolesAllowed("user")
+    public Response getAllTasks(@Context SecurityContext securityContext) {
+        try {
+            String userEmail = securityContext.getUserPrincipal().getName();
+            LOG.infof("Request to get all tasks for user: %s", userEmail);
+            List<Task> tasks = taskService.findAllByUser(userEmail);
+            APIResponseDTO<List<Task>> responseDTO = APIResponseDTO.success("Tasks retrieved successfully", tasks, Response.Status.OK.getStatusCode());
+            return Response.status(Response.Status.OK)
+                    .entity(responseDTO)
+                    .build();
+        } catch (IllegalArgumentException e) {
+            LOG.errorf(e, "Error getting tasks");
+            APIResponseDTO<String> responseDTO = APIResponseDTO.error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode());
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(responseDTO)
+                    .build();
+        } catch (Exception e) {
+            LOG.errorf(e, "Error getting tasks");
+            APIResponseDTO<String> responseDTO = APIResponseDTO.error("Internal server error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(responseDTO)
+                    .build();
+        }
+    }
+
+    /**
+     * Endpoint for get task by id and user email
+     */
+    @GET
+    @Path("/{id}")
+    @RolesAllowed("user")
+    public Response getTaskById(@Context SecurityContext securityContext, @PathParam("id") Long id) {
+        try {
+            String userEmail = securityContext.getUserPrincipal().getName();
+            LOG.infof("Request to get task with id: %d for user: %s", id, userEmail);
+            Task task = taskService.findByIdAndUserEmail(id, userEmail);
+            APIResponseDTO<Task> responseDTO = APIResponseDTO.success("Task retrieved successfully", task, Response.Status.OK.getStatusCode());
+            return Response.status(Response.Status.OK)
+                    .entity(responseDTO)
+                    .build();
+        } catch (IllegalArgumentException e) {
+            LOG.errorf(e, "Error getting task");
+            APIResponseDTO<String> responseDTO = APIResponseDTO.error(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode());
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity(responseDTO)
+                    .build();
+        } catch (Exception e) {
+            LOG.errorf(e, "Error getting task");
+            APIResponseDTO<String> responseDTO = APIResponseDTO.error("Internal server error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(responseDTO)
+                    .build();
+        }
     }
 }
