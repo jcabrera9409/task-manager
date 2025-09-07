@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
@@ -15,23 +16,53 @@ public class Token extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
     
     @Column(nullable = false, unique = true, name = "access_token", length = 2048)
-    public String accessToken;
-    
-    @Column(nullable = false, unique = true, name = "refresh_token", length = 2048)
-    public String refreshToken;
-    
+    private String accessToken;
+
+    @Column(nullable = true, unique = true, name = "refresh_token", length = 2048)
+    private String refreshToken;
+
     @Column(nullable = false, name = "logged_out")
-    public boolean loggedOut;
-    
+    private boolean loggedOut;
+
     @ManyToOne(optional = false)
-    public User user;
+    private User user;
+
+    // Getters and Setters
+    public String getAccessToken() {
+        return this.accessToken;
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+    }
+
+    public String getRefreshToken() {
+        return this.refreshToken;
+    }
+    
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
+
+    public User getUser() {
+        return this.user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
 
     // Bussiness methods
     public boolean isValid() {
         return !this.loggedOut;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.loggedOut = false;
     }
     
     @Override

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.CascadeType;
@@ -40,6 +41,7 @@ public class User extends PanacheEntityBase {
     @Column(nullable = false, name = "email", length = 100)
     private String email;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @NotBlank(message = "The password is mandatory")
     @Size(min = 6, max = 100, message = "The password must be between 6 and 100 characters")
     @Column(nullable = false, name = "password", length = 100)
