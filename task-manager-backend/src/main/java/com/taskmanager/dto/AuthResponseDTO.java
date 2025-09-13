@@ -2,6 +2,9 @@ package com.taskmanager.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
+@RegisterForReflection
 public class AuthResponseDTO {
     
     @JsonProperty("access_token")

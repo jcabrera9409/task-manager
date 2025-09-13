@@ -1,8 +1,10 @@
 package com.taskmanager.dto;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+@RegisterForReflection
 public class LoginRequestDTO {
 
     @NotBlank(message = "Email is required")

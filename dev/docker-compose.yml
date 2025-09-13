@@ -10,3 +10,19 @@ services:
       - "3306:3306"
     volumes:
       - ./mysql-data:/var/lib/mysql
+  
+  backend:
+    image: task-manager-micro:latest
+    restart: always
+    container_name: backend
+    environment:
+      - USER_BD=root
+      - PASSWORD_BD=root
+      - DATASOURCE_BD=jdbc:mysql://bd:3306/tmdb
+      - JWT_PUBLIC_KEY_PATH=file:/work/publicKey.pem
+      - JWT_PRIVATE_KEY_PATH=file:/work/privateKey.pem
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./privateKey.pem:/work/privateKey.pem
+      - ./publicKey.pem:/work/publicKey.pem

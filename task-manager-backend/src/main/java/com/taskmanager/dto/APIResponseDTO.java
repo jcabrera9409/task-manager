@@ -2,6 +2,9 @@ package com.taskmanager.dto;
 
 import java.time.LocalDateTime;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
+@RegisterForReflection
 public class APIResponseDTO<T> {
     private boolean success;
     private String message;

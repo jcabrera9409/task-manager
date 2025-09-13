@@ -291,6 +291,21 @@ java -jar target/*-runner.jar
 ./target/task-manager-backend-1.0.0-SNAPSHOT-runner
 ```
 
+### Docker Images
+```bash
+# Standard native image (~50-100MB)
+docker build -f docker/Dockerfile.native -t task-manager-native .
+
+# Ultra-optimized micro image (~20-50MB)  
+docker build -f docker/Dockerfile.native-micro -t task-manager-micro .
+
+# JVM image (development)
+docker build -f docker/Dockerfile.jvm -t task-manager-jvm .
+
+# Legacy JAR image
+docker build -f docker/Dockerfile.legacy-jar -t task-manager-legacy .
+```
+
 ## 🔒 Security
 
 ### JWT Authentication
