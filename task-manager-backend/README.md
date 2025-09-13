@@ -90,8 +90,8 @@ src/main/java/com/taskmanager/
 
 ### Prerequisites
 
-- **Java 21 or higher**
-- **Maven 3.8+**
+- **Java 21 or higher** (tested with Java 21.0.8)
+- **Maven 3.8+** (tested with Maven 3.9.11)
 - **MySQL 8.0**
 - **Docker** (optional, for database)
 
@@ -165,12 +165,12 @@ chmod +x setup-keys.sh
 
 #### Development Mode
 ```bash
-./mvnw quarkus:dev
+mvn quarkus:dev
 ```
 
 #### Production Mode
 ```bash
-./mvnw package
+mvn package
 java -jar target/quarkus-app/quarkus-run.jar
 ```
 
@@ -206,11 +206,11 @@ java -jar target/quarkus-app/quarkus-run.jar
 
 ```bash
 # All tests
-./mvnw test
+mvn test
 
 # Specific tests
-./mvnw test -Dtest=AuthServiceImplTest
-./mvnw test -Dtest=TaskServiceImplTest
+mvn test -Dtest=AuthServiceImplTest
+mvn test -Dtest=TaskServiceImplTest
 ```
 
 ### Test Coverage
@@ -269,41 +269,77 @@ DATASOURCE_BD=jdbc:mysql://production_host:3306/production_db
 
 ### Standard JAR
 ```bash
-./mvnw package
+mvn package
 java -jar target/quarkus-app/quarkus-run.jar
 ```
 
 ### Uber JAR
 ```bash
-./mvnw package -Dquarkus.package.jar.type=uber-jar
+mvn package -Dquarkus.package.jar.type=uber-jar
 java -jar target/*-runner.jar
 ```
 
 ### Native Executable
+
+**System Requirements for Native Compilation:**
+- **Maven 3.9.11+** (confirmed working version)
+- **Java 21** (confirmed working with 21.0.8)
+- **Docker** (for container-based compilation)
+- **GraalVM** (optional, for local compilation)
+
 ```bash
-# With GraalVM installed
-./mvnw package -Dnative
+# Container-based compilation (recommended)
+mvn package -Dnative -Dquarkus.native.container-build=true
 
-# With Docker
-./mvnw package -Dnative -Dquarkus.native.container-build=true
+# Local GraalVM compilation (requires GraalVM installed)
+mvn package -Dnative
 
-# Execute
+# Execute native binary
 ./target/task-manager-backend-1.0.0-SNAPSHOT-runner
 ```
 
+**Note**: Container-based compilation (`-Dquarkus.native.container-build=true`) is recommended as it:
+- Works without local GraalVM installation
+- Ensures consistent build environment
+- Avoids platform-specific compilation issues
+
 ### Docker Images
+
+**Before building Docker images, compile the native executable:**
+
 ```bash
+# Container-based native compilation (recommended)
+mvn package -Dnative -Dquarkus.native.container-build=true
+```
+
+**Then build the Docker images:**
+
+```bash
+# Ultra-optimized micro image (~20-50MB)
+docker build -f docker/Dockerfile.native-micro -t task-manager-micro .
+
 # Standard native image (~50-100MB)
 docker build -f docker/Dockerfile.native -t task-manager-native .
 
-# Ultra-optimized micro image (~20-50MB)  
-docker build -f docker/Dockerfile.native-micro -t task-manager-micro .
-
-# JVM image (development)
+# JVM image (development, ~200MB)
 docker build -f docker/Dockerfile.jvm -t task-manager-jvm .
 
 # Legacy JAR image
 docker build -f docker/Dockerfile.legacy-jar -t task-manager-legacy .
+```
+
+**Run Docker containers:**
+
+```bash
+# Run micro image
+docker run -i --rm -p 8080:8080 task-manager-micro
+
+# Run with environment variables
+docker run -i --rm -p 8080:8080 \
+  -e USER_BD=root \
+  -e PASSWORD_BD=root \
+  -e DATASOURCE_BD=jdbc:mysql://host.docker.internal:3306/tmdb \
+  task-manager-micro
 ```
 
 ## 🔒 Security
@@ -324,23 +360,57 @@ docker build -f docker/Dockerfile.legacy-jar -t task-manager-legacy .
 
 ### Common Problems
 
-1. **Database connection error**: 
+1. **Maven command not found**:
+   ```bash
+   # Check Maven installation
+   mvn --version
+   
+   # Install Maven (macOS with Homebrew)
+   brew install maven
+   
+   # Or download from https://maven.apache.org/
+   ```
+
+2. **Maven version compatibility**:
+   ```bash
+   # Verify Maven version (should be 3.8+ for Quarkus)
+   mvn --version
+   # Expected: Apache Maven 3.9.11 or higher
+   
+   # Java version compatibility
+   java --version
+   # Expected: Java 21.0.8 or higher
+   ```
+
+3. **Database connection error**: 
    - Verify MySQL is running
    - Check credentials in `USER_BD` and `PASSWORD_BD` variables
    - Verify connection URL in `DATASOURCE_BD`
    
-2. **JWT error**: 
+4. **JWT error**: 
    - Verify paths in `JWT_PUBLIC_KEY_PATH` and `JWT_PRIVATE_KEY_PATH` are absolute
    - Verify key files exist
    - Run `setup-keys.sh` script if keys don't exist
    
-3. **CORS error**: 
+5. **CORS error**: 
    - Verify allowed origins configuration
    - In development, use `http://localhost:3000`
    
-4. **Validation error**: 
+6. **Validation error**: 
    - Verify sent data meets validations
    - Check logs for specific details
+
+7. **Native compilation issues**:
+   ```bash
+   # Use container build to avoid local GraalVM requirements
+   mvn package -Dnative -Dquarkus.native.container-build=true
+   
+   # Check Docker is running
+   docker --version
+   
+   # Verify sufficient memory for compilation (8GB+ recommended)
+   docker run --rm -it --memory=8g maven:3.9.11-eclipse-temurin-21 mvn --version
+   ```
 
 ### Configuration Variables by Profile
 
@@ -352,6 +422,31 @@ docker build -f docker/Dockerfile.legacy-jar -t task-manager-legacy .
 # Production (prod)  
 %prod.quarkus.log.console.level=INFO
 %prod.quarkus.http.cors.origins=https://task-manager.com
+```
+
+### Maven Configuration
+
+This project requires Maven for building and running. Since the project doesn't include Maven Wrapper, you need Maven installed on your system.
+
+| Aspect | System Maven (`mvn`) |
+|--------|---------------------|
+| **Version Required** | 3.9.11+ |
+| **Setup** | Requires Maven installation |
+| **Java Compatibility** | Java 21+ |
+| **Installation** | `brew install maven` (macOS) |
+
+**Verified compatibility:**
+- ✅ Java 21.0.8 (Oracle Corporation)
+- ✅ Maven 3.9.11
+- ✅ macOS (tested on macOS 15.6.1 ARM64)
+
+**Installation:**
+```bash
+# macOS with Homebrew
+brew install maven
+
+# Verify installation
+mvn --version
 ```
 
 ### Useful Logs
