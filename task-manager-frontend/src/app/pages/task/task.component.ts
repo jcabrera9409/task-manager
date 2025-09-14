@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '../../modals/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-task',
@@ -8,5 +10,15 @@ import { Component } from '@angular/core';
   styleUrl: './task.component.css'
 })
 export class TaskComponent {
+
+  constructor(
+    private dialog: MatDialog
+  ) { }
+
+  openDeleteDialog() {
+    this.dialog.open(ConfirmDialogComponent, {
+      data: null
+    })
+  }
 
 }
