@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
+import { TaskEditionDialogComponent } from '../../modals/task-edition-dialog/task-edition-dialog.component';
 
 @Component({
   selector: 'app-layout',
@@ -10,4 +12,15 @@ import { RouterOutlet } from '@angular/router';
 })
 export class LayoutComponent {
 
+  constructor(
+    private dialog: MatDialog
+  ) { }
+
+
+  openDialog() {
+    this.dialog.open(TaskEditionDialogComponent, {
+      data: null,
+      panelClass: 'w-1/3',
+    });
+  }
 }
