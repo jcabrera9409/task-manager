@@ -1,0 +1,32 @@
+<div class="bg-gray-50 min-h-screen">
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <h1 class="text-xl font-bold text-gray-800">Task Manager</h1>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <!-- Botón para nueva tarea -->
+                    <button id="newTaskBtn"
+                        class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-md text-sm font-medium transition duration-150 ease-in-out">
+                        <i class="fas fa-plus mr-2"></i>Nueva Tarea
+                    </button>
+
+                    <!-- Menú de usuario -->
+                    <div class="relative">
+                        <button id="userMenuBtn" class="flex items-center space-x-2 text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-arrow-right-from-bracket text-lg"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <router-outlet></router-outlet>
+    </div>
+</div>
