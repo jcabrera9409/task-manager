@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID, Optional } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable({
   providedIn: 'root'
@@ -10,8 +11,13 @@ export class EnvService {
   private tokenName: string;
   private domains: string[];
 
-  constructor() { 
-    const env = (window as any).__env || {};
+  constructor(@Optional() @Inject(PLATFORM_ID) private platformId?: Object) { 
+    let env: any = {};
+    
+    // Check if we're in a browser environment
+    if (this.platformId ? isPlatformBrowser(this.platformId) : typeof window !== 'undefined') {
+      env = (window as any).__env || {};
+    }
 
     this.production = env.production || false;
     this.apiUrl = env.apiUrl || 'http://localhost:8080/rest/api/v1';

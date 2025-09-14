@@ -28,7 +28,9 @@
               "src/styles.css",
               "src/custom-theme.scss"
             ],
-            "scripts": [],
+            "scripts": [
+              "src/assets/env.js"
+            ],
             "server": "src/main.server.ts",
             "prerender": true,
             "ssr": {
