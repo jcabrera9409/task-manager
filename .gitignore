@@ -266,3 +266,6 @@ dist
 
 mysql-data/
 *.pem
+
+mockup/
+.DS_Store
