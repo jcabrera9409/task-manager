@@ -5,6 +5,10 @@ import { FormMethods } from '../../util/form';
 import { Message } from '../../_model/message';
 import { CommonModule } from '@angular/common';
 import { LoaderComponent } from '../../shared/loader/loader.component';
+import { Router } from '@angular/router';
+import { AuthService } from '../../_service/auth.service';
+import { finalize } from 'rxjs';
+import { UtilMethods } from '../../util/util';
 
 
 @Component({
@@ -20,6 +24,8 @@ export class LoginComponent {
   loginForm: FormGroup;
 
   constructor(
+    private router: Router,
+    private authService: AuthService,
     private notificationService: NotificationService,
     private renderer: Renderer2
   ) {
@@ -39,5 +45,39 @@ export class LoginComponent {
       )
       return;
     }
+
+    this.isLoading = true;
+
+    const { email, password } = this.loginForm.value;
+
+    this.authService.login(email, password)
+      .pipe(
+        finalize(() =>{
+          this.isLoading = false;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            UtilMethods.getInstance().setJwtToken(response.data.access_token);
+            this.router.navigate(['task']);
+          } else {
+            this.notificationService.setMessageChange(
+              Message.error(response.message)
+            )
+          }
+        },
+        error: (err) => {
+          if (err.error?.success === false && err.error?.message) {
+            this.notificationService.setMessageChange(
+              Message.error(err.error.message)
+            )
+            return;
+          }
+          this.notificationService.setMessageChange(
+            Message.error('Error al iniciar sesión. Por favor, inténtelo de nuevo.', err)
+          )
+        }
+      });
   }
 }
