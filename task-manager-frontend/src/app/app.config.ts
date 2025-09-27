@@ -6,12 +6,16 @@ import { provideClientHydration } from '@angular/platform-browser';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { JwtModule } from '@auth0/angular-jwt';
 import { EnvService } from './_service/env.service';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi, withFetch } from '@angular/common/http';
 
 const envService = new EnvService();  
 
 export function jwtTokenGetter(): string {
-  return sessionStorage.getItem(envService.getTokenName) || '';
+  // Check if we're in a browser environment where sessionStorage is available
+  if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+    return sessionStorage.getItem(envService.getTokenName) || '';
+  }
+  return '';
 }
 
 export const appConfig: ApplicationConfig = {
@@ -19,7 +23,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes), 
     provideAnimationsAsync(),
     provideClientHydration(),
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(withInterceptorsFromDi(), withFetch()),
     importProvidersFrom(
       JwtModule.forRoot({
         config: {

@@ -62,8 +62,12 @@ export class UtilMethods {
     }
 
     public getJwtToken(): string {
-        let token = sessionStorage.getItem(UtilMethods.envService.getTokenName);
-        return token;
+        // Check if we're in a browser environment where sessionStorage is available
+        if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+            let token = sessionStorage.getItem(UtilMethods.envService.getTokenName);
+            return token;
+        }
+        return null;
     }
 
     public getUsernameFieldJwtToken(): string {
@@ -121,10 +125,16 @@ export class UtilMethods {
     }
 
     public setJwtToken(token: string): void {
-        sessionStorage.setItem(UtilMethods.envService.getTokenName, token);
+        // Check if we're in a browser environment where sessionStorage is available
+        if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(UtilMethods.envService.getTokenName, token);
+        }
     }
 
     public removeJwtToken(): void {
-        sessionStorage.removeItem(UtilMethods.envService.getTokenName);
+        // Check if we're in a browser environment where sessionStorage is available
+        if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+            sessionStorage.removeItem(UtilMethods.envService.getTokenName);
+        }
     }
 }

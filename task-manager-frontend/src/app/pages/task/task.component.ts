@@ -1,24 +1,86 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialogComponent } from '../../modals/confirm-dialog/confirm-dialog.component';
+import { TaskService } from '../../_service/task.service';
+import { LoaderComponent } from '../../shared/loader/loader.component';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
+import { NotificationService } from '../../_service/notification.service';
+import { Message } from '../../_model/message';
+import { UtilMethods } from '../../util/util';
+import { AuthService } from '../../_service/auth.service';
 
 @Component({
   selector: 'app-task',
   standalone: true,
-  imports: [],
+  imports: [LoaderComponent, CommonModule, ReactiveFormsModule],
   templateUrl: './task.component.html',
   styleUrl: './task.component.css'
 })
-export class TaskComponent {
+export class TaskComponent implements OnInit{
+
+  isLoading: boolean = false;
+
+  totalTasks: number = 0;
+  pendingTasks: number = 0;
+  completedTasks: number = 0;
 
   constructor(
-    private dialog: MatDialog
+    private taskService: TaskService,
+    private notificationService: NotificationService,
+    private dialog: MatDialog,
+    private authService: AuthService
   ) { }
+
+  ngOnInit(): void {
+    this.getAllTasks();
+
+    this.taskService.getObjectChange().subscribe({
+      next: (data) => {
+        console.log(data);
+      }
+    })
+  }
 
   openDeleteDialog() {
     this.dialog.open(ConfirmDialogComponent, {
       data: null
     })
+  }
+
+  private getAllTasks() {
+    this.isLoading = true;
+    this.taskService.getAll()
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response.success) {
+            this.taskService.setObjectChange(response.data);
+          } else {
+            this.taskService.setObjectChange(null);
+            this.notificationService.setMessageChange(
+              Message.error(response.message)
+            )
+          }
+        },
+        error: (error) => {
+          console.error('Error al obtener tareas:', error);
+          if (error.status === 401) {
+            this.notificationService.setMessageChange(
+              Message.error('Sesión expirada. Por favor, inicie sesión nuevamente.')
+            );
+          } else {
+            this.notificationService.setMessageChange(
+              Message.error('Error al cargar las tareas. Por favor, intente nuevamente.')
+            );
+          }
+        }
+      });
   }
 
 }

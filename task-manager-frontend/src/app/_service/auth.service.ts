@@ -5,6 +5,7 @@ import { EnvService } from './env.service';
 import { User } from '../_model/user';
 import { APIResponseDTO, AuthenticationResponseDTO } from '../_model/dto';
 import { UtilMethods } from '../util/util';
+import { finalize } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -34,10 +35,16 @@ export class AuthService {
 
   logout() {
     this.http.get(`${this.url}/logout`)
+      .pipe(
+        finalize(() =>{
+          this.router.navigate(['login']);
+        })
+      )
       .subscribe(() => {
-        sessionStorage.clear();
-        this.router.navigate(['login']);
+        // Check if we're in a browser environment where sessionStorage is available
+        if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+          sessionStorage.clear();
+        }
       })
-
   }
 }
