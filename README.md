@@ -11,6 +11,8 @@ This project showcases a production-ready task management system featuring:
 - ✅ **Responsive Design**: Tailwind CSS with mobile-first approach  
 - ✅ **JWT Authentication**: Secure login with route guards
 - ✅ **Real-time Dashboard**: Task statistics and interactive management
+- ✅ **Advanced Modal System**: Configurable dialogs with DTO-based configuration
+- ✅ **Robust Error Handling**: RxJS operators for comprehensive error management
 - ✅ **Server-Side Rendering**: SSR configuration included
 - ✅ **Comprehensive Testing**: Karma + Jasmine testing suite
 
@@ -35,7 +37,7 @@ task-manager/
 ├── task-manager-frontend/    # Angular 17 Web Application
 │   ├── src/app/
 │   │   ├── pages/           # Main pages (login, dashboard, layout)
-│   │   ├── modals/          # Dialog components (task-edition, confirm)
+│   │   ├── modals/          # Dialog components (task-edition, confirm-dialog)
 │   │   ├── shared/          # Shared components (loader, notifications)
 │   │   ├── _service/        # Services (auth, task, notification)
 │   │   ├── _model/          # TypeScript models (task, user, DTOs)
@@ -1114,7 +1116,8 @@ curl -X PUT "http://localhost:8080/rest/api/v1/tasks/1/complete" \
 #### 📊 Task Dashboard  
 - **Real-time Statistics**: Live counters for total, pending, and completed tasks
 - **Interactive Cards**: Clean task cards with contextual actions
-- **Modal Dialogs**: Create and edit tasks with form validation
+- **Advanced Modal System**: Configurable dialogs for task creation/editing and confirmations
+- **Robust Error Handling**: RxJS operators (catchError, switchMap, finalize) for comprehensive error management
 - **Responsive Design**: Mobile-first approach with Tailwind CSS
 
 #### ⚡ Modern Angular Features
@@ -1262,8 +1265,8 @@ export class NotificationService {
 - **LayoutComponent**: Main layout wrapper with navigation
 
 #### Modal Components  
-- **TaskEditionDialogComponent**: Create/edit tasks with form validation
-- **ConfirmDialogComponent**: Reusable confirmation dialog
+- **TaskEditionDialogComponent**: Create/edit tasks with reactive form validation and error handling
+- **ConfirmDialogComponent**: Reusable confirmation dialog with DTO-based configuration (ConfirmDataDTO)
 
 #### Shared Components
 - **LoaderComponent**: Global loading spinner with overlay

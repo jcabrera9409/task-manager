@@ -60,7 +60,7 @@ src/
 │   ├── _model/                    # Modelos de datos TypeScript
 │   │   ├── task.ts               # Modelo Task con User relation
 │   │   ├── user.ts               # Modelo User
-│   │   ├── dto.ts                # DTOs (API Response, Auth, Pageable, Confirm)
+│   │   ├── dto.ts                # DTOs (API Response, Auth, Pageable, ConfirmDataDTO)
 │   │   └── message.ts            # Modelo Message para notificaciones
 │   ├── _service/                  # Servicios de la aplicación
 │   │   ├── auth.service.ts       # Autenticación JWT (login/logout)
@@ -78,17 +78,17 @@ src/
 │   │   │   ├── layout.component.html # Header con botón "Nueva Tarea"
 │   │   │   └── layout.component.css
 │   │   ├── task/                 # Dashboard principal de tareas
-│   │   │   ├── task.component.ts # Gestión completa de tareas con estadísticas
-│   │   │   ├── task.component.html # Dashboard con cards y lista de tareas
+│   │   │   ├── task.component.ts # Gestión completa de tareas con estadísticas y modales
+│   │   │   ├── task.component.html # Dashboard con cards, estadísticas y lista de tareas
 │   │   │   └── task.component.css
 │   │   └── pages.routes.ts       # Rutas de páginas internas
 │   ├── modals/                    # Componentes modales
-│   │   ├── confirm-dialog/       # Modal de confirmación genérico
-│   │   │   ├── confirm-dialog.component.ts # Lógica del modal con DTO
+│   │   ├── confirm-dialog/       # Modal de confirmación genérico configurable
+│   │   │   ├── confirm-dialog.component.ts # Lógica del modal con ConfirmDataDTO
 │   │   │   ├── confirm-dialog.component.html
 │   │   │   └── confirm-dialog.component.css
-│   │   └── task-edition-dialog/  # Modal CRUD de tareas
-│   │       ├── task-edition-dialog.component.ts # Formulario reactivo
+│   │   └── task-edition-dialog/  # Modal CRUD de tareas con validaciones
+│   │       ├── task-edition-dialog.component.ts # Formulario reactivo con manejo de errores
 │   │       ├── task-edition-dialog.component.html
 │   │       └── task-edition-dialog.component.css
 │   ├── shared/                    # Componentes compartidos
@@ -238,6 +238,59 @@ canActivate(): boolean {
 - ✅ Manejo de tokens expirados
 - ✅ Redirección automática a login
 
+## 🎭 Sistema de Modales
+
+### Modal de Confirmación Genérico
+
+El sistema incluye un componente de confirmación reutilizable configurado mediante `ConfirmDataDTO`:
+
+```typescript
+// ConfirmDataDTO - Configuración del modal
+interface ConfirmDataDTO {
+  title: string;        // Título del modal
+  message: string;      // Mensaje de confirmación
+  confirmText: string;  // Texto del botón de confirmación
+  cancelText: string;   // Texto del botón de cancelación
+}
+
+// Ejemplo de uso en componente
+openCompleteDialog(task: Task) {
+  const confirmData: ConfirmDataDTO = {
+    title: 'Confirmar Completado',
+    message: '¿Estás seguro de que deseas marcar esta tarea como completada?',
+    confirmText: 'Completar',
+    cancelText: 'Cancelar'
+  };
+  
+  const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+    data: confirmData
+  });
+
+  dialogRef.afterClosed().subscribe(result => {
+    if (result) {
+      this.markAsCompleted(task);
+    }
+  });
+}
+```
+
+### Modal de Edición de Tareas
+
+Modal inteligente que detecta si es creación o edición:
+
+```typescript
+// TaskEditionDialogComponent - Auto-configuración
+constructor(@Inject(MAT_DIALOG_DATA) public data: Task | null) {
+  this.form = new FormGroup({
+    title: new FormControl(data?.title || '', Validators.required),
+    description: new FormControl(data?.description || '', Validators.required)
+  });
+
+  // Configuración automática del título
+  this.dialogTitle = data && data.id ? 'Editar Tarea' : 'Nueva Tarea';
+}
+```
+
 ## 📊 Gestión de Tareas
 
 ### Funcionalidades del Dashboard
@@ -248,11 +301,11 @@ canActivate(): boolean {
 - **Tareas completadas**: Filtro por `completed: true`
 
 #### Operaciones CRUD
-- ✅ **Crear**: Modal con formulario reactivo
-- ✅ **Listar**: Vista de cards con información completa
-- ✅ **Editar**: Modal pre-poblado (solo tareas pendientes)
-- ✅ **Completar**: Acción directa con confirmación
-- ✅ **Eliminar**: Modal de confirmación
+- ✅ **Crear**: Modal con formulario reactivo y validaciones en tiempo real
+- ✅ **Listar**: Vista de cards con información completa y estadísticas actualizadas
+- ✅ **Editar**: Modal pre-poblado con formulario reactivo (solo tareas pendientes)
+- ✅ **Completar**: Acción directa con modal de confirmación personalizable
+- ✅ **Eliminar**: Modal de confirmación genérico con mensajes customizables
 
 ### Modelo de Datos Actual
 
@@ -285,13 +338,72 @@ POST   /tasks              # Crear nueva tarea
 PUT    /tasks              # Actualizar tarea existente
 PUT    /tasks/{id}/complete # Marcar tarea como completada
 DELETE /tasks/{id}         # Eliminar tarea
-PUT    /tasks/{id}/complete # Marcar tarea como completada
+
+// Ejemplo de implementación del método markAsCompleted
+markAsCompleted(id: number) {
+  return this.http.put<APIResponseDTO<void>>(`${this.url}/${id}/complete`, {});
+}
 ```
 
 ### Gestión de Estado
-- **Observables**: Comunicación reactiva entre componentes
-- **Subject Pattern**: Actualización automática de listas
-- **Error Handling**: Manejo robusto con operadores RxJS
+- **Observables**: Comunicación reactiva entre componentes con Subject pattern
+- **Subject Pattern**: Actualización automática de listas y estadísticas
+- **Error Handling**: Manejo robusto con operadores RxJS (catchError, switchMap, finalize)
+- **Reactive Forms**: Validación en tiempo real con FormControl y FormGroup
+- **Modal System**: Sistema unificado de modales con DTOs para configuración
+
+## 🛡️ Manejo Avanzado de Errores
+
+### Patrón de Error Handling con RxJS
+
+El sistema implementa un manejo robusto de errores usando operadores RxJS:
+
+```typescript
+// Ejemplo: Marcar tarea como completada con manejo de errores
+private markAsCompleted(task: Task) {
+  this.isLoading = true;
+  
+  this.taskService.markAsCompleted(task.id)
+    .pipe(
+      catchError(error => {
+        this.notificationService.setMessageChange(
+          Message.error('Ocurrió un error al procesar la solicitud.', error)
+        );
+        return EMPTY; // Evita continuar la cadena en caso de error
+      }),
+      switchMap(() => this.taskService.getAll()), // Actualizar lista tras éxito
+      catchError(error => {
+        this.notificationService.setMessageChange(
+          Message.error('Ocurrió un error al listar las tareas.', error)
+        );
+        return EMPTY;
+      }),
+      finalize(() => {
+        this.isLoading = false; // Siempre se ejecuta
+      })
+    )
+    .subscribe((response) => {
+      if (response.success) {
+        this.taskService.setObjectChange(response.data);
+        this.notificationService.setMessageChange(
+          Message.success('Tarea marcada como completada.')
+        );
+      } else {
+        this.notificationService.setMessageChange(
+          Message.error('Error al marcar la tarea como completada.', response.message)
+        );
+      }
+    });
+}
+```
+
+### Características del Error Handling
+- ✅ **Múltiples niveles**: Error en operación individual y en actualización de lista
+- ✅ **Mensajes contextuales**: Errores específicos para cada operación
+- ✅ **Continuidad de flujo**: `switchMap` para encadenar operaciones
+- ✅ **Limpieza garantizada**: `finalize` para reset de estado de loading
+- ✅ **Fallback graceful**: `EMPTY` para evitar propagación de errores
+- ✅ **Estado de autenticación**: Manejo específico de errores 401
 
 ## 🎨 Sistema de Estilos
 
