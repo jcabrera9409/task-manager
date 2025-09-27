@@ -37,14 +37,21 @@ export class AuthService {
     this.http.get(`${this.url}/logout`)
       .pipe(
         finalize(() =>{
+          // Always clear sessionStorage and navigate, regardless of HTTP request outcome
+          if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
+            sessionStorage.clear();
+          }
           this.router.navigate(['login']);
         })
       )
-      .subscribe(() => {
-        // Check if we're in a browser environment where sessionStorage is available
-        if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
-          sessionStorage.clear();
+      .subscribe({
+        next: () => {
+          // HTTP request succeeded
+        },
+        error: (error) => {
+          // HTTP request failed - but we still want to clear session and navigate
+          console.warn('Logout request failed, but proceeding with local cleanup:', error);
         }
-      })
+      });
   }
 }
