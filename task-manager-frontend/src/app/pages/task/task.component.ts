@@ -8,8 +8,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { NotificationService } from '../../_service/notification.service';
 import { Message } from '../../_model/message';
-import { UtilMethods } from '../../util/util';
-import { AuthService } from '../../_service/auth.service';
+import { Task } from '../../_model/task';
 
 @Component({
   selector: 'app-task',
@@ -26,11 +25,12 @@ export class TaskComponent implements OnInit{
   pendingTasks: number = 0;
   completedTasks: number = 0;
 
+  tasks: Task[] = [];
+
   constructor(
     private taskService: TaskService,
     private notificationService: NotificationService,
-    private dialog: MatDialog,
-    private authService: AuthService
+    private dialog: MatDialog
   ) { }
 
   ngOnInit(): void {
@@ -38,7 +38,8 @@ export class TaskComponent implements OnInit{
 
     this.taskService.getObjectChange().subscribe({
       next: (data) => {
-        console.log(data);
+        this.tasks = data || [];
+        this.completeStatistics();
       }
     })
   }
@@ -47,6 +48,17 @@ export class TaskComponent implements OnInit{
     this.dialog.open(ConfirmDialogComponent, {
       data: null
     })
+  }
+
+  private completeStatistics() {
+    this.tasks.forEach(task => {
+      if (task.completed) {
+        this.completedTasks++;
+      } else {
+        this.pendingTasks++;
+      }
+    });
+    this.totalTasks = this.tasks.length;
   }
 
   private getAllTasks() {

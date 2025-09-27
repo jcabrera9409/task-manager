@@ -5,7 +5,7 @@
 </div>
 
 <!-- Estadísticas -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <div class="flex items-center">
             <div class="p-2 bg-blue-100 rounded-lg">
@@ -13,7 +13,7 @@
             </div>
             <div class="ml-4">
                 <p class="text-sm font-medium text-gray-600">Total</p>
-                <p class="text-2xl font-semibold text-gray-900" id="totalTasks">12</p>
+                <p class="text-2xl font-semibold text-gray-900" id="totalTasks">{{ totalTasks }}</p>
             </div>
         </div>
     </div>
@@ -25,7 +25,7 @@
             </div>
             <div class="ml-4">
                 <p class="text-sm font-medium text-gray-600">Pendientes</p>
-                <p class="text-2xl font-semibold text-gray-900" id="pendingTasks">7</p>
+                <p class="text-2xl font-semibold text-gray-900" id="pendingTasks">{{ pendingTasks }}</p>
             </div>
         </div>
     </div>
@@ -37,19 +37,7 @@
             </div>
             <div class="ml-4">
                 <p class="text-sm font-medium text-gray-600">Completadas</p>
-                <p class="text-2xl font-semibold text-gray-900" id="completedTasks">5</p>
-            </div>
-        </div>
-    </div>
-
-    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div class="flex items-center">
-            <div class="p-2 bg-red-100 rounded-lg">
-                <i class="fas fa-exclamation-triangle text-danger text-xl"></i>
-            </div>
-            <div class="ml-4">
-                <p class="text-sm font-medium text-gray-600">Vencidas</p>
-                <p class="text-2xl font-semibold text-gray-900" id="overdueTasks">2</p>
+                <p class="text-2xl font-semibold text-gray-900" id="completedTasks">{{ completedTasks }}</p>
             </div>
         </div>
     </div>
@@ -81,49 +69,50 @@
     </div>
 
     <div id="tasksList" class="divide-y divide-gray-200">
-        
-        <div class="p-8 text-center text-gray-500">
+
+        <div *ngIf="totalTasks === 0" class="p-8 text-center text-gray-500">
             <i class="fas fa-tasks text-4xl mb-4"></i>
             <p class="text-lg">No se encontraron tareas</p>
             <p class="text-sm">Crea una nueva tarea para comenzar</p>
         </div>
 
 
-        <div class="p-6 hover:bg-gray-50 transition-colors duration-150">
+        <div *ngFor="let task of tasks" class="p-6 hover:bg-gray-50 transition-colors duration-150">
             <div class="flex items-center justify-between">
                 <div class="flex-1">
                     <div class="flex items-center space-x-3 mb-2">
-                        <h3 class="text-lg font-medium text-gray-900 completed">Titulo de tarea</h3>
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                        <h3 class="text-lg font-medium text-gray-900 completed">{{ task.title }}</h3>
+                        <span *ngIf="!task.completed" class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
                             <i class="fas fa-clock mr-1"></i>
                             En Progreso
                         </span>
+                        <span *ngIf="task.completed" class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            <i class="fas fa-check mr-1"></i>
+                            En Progreso
+                        </span>
                     </div>
-                    
-                    <p class="text-gray-600 mb-3">Descripcion de tarea</p>
-                    
+
+                    <p class="text-gray-600 mb-3">{{ task.description }}</p>
+
                     <div class="flex items-center space-x-4 text-sm text-gray-500">
-                        <span><i class="fas fa-plus mr-1"></i>Creada: 4 set 2025</span>
+                        <span><i class="fas fa-plus mr-1"></i>Creada: {{ task.createdAt | date: 'dd/MM/yyyy' }}</span>
                     </div>
                 </div>
                 
                 <div class="flex items-center space-x-2 ml-4">
-                    <button 
+                    <button *ngIf="!task.completed"
                         class="p-2 text-gray-500 hover:text-primary transition-colors duration-150"
-                        title="Editar tarea"
-                    >
+                        title="Editar tarea">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button 
+                    <button *ngIf="!task.completed"
                         class="p-2 text-gray-500 hover:text-success transition-colors duration-150"
-                        title="Marcar como completada"
-                    >
+                        title="Marcar como completada">
                         <i class="fas fa-check"></i>
                     </button>
                     <button (click)="openDeleteDialog()"
                         class="p-2 text-gray-500 hover:text-red-500 transition-colors duration-150"
-                        title="Eliminar tarea"
-                    >
+                        title="Eliminar tarea">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>

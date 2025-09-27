@@ -2,7 +2,7 @@ package com.taskmanager.model;
 
 import java.time.LocalDateTime;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -37,11 +37,11 @@ public class Task extends PanacheEntityBase {
     @Column(nullable = false, name = "description", length = 1000)
     public String description;
 
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @Column(nullable = false, name = "created_at")
     public LocalDateTime createdAt;
 
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     @Column(nullable = true, name = "updated_at")
     public LocalDateTime updatedAt;
 
