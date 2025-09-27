@@ -112,6 +112,22 @@ public class TaskServiceImpl extends CRUDImpl<Task, Long> implements ITaskServic
         super.delete(task.getId());
     }
 
+    /**
+     * Mark task as completed
+     */
+    @Override
+    @Transactional
+    public void markAsCompleted(Long id, String userEmail) {
+        LOG.infof("Marking task with id: %d as completed for user: %s", id, userEmail);
+        Task task = findByIdAndUserEmail(id, userEmail);
+        
+        if (task.getCompleted()) {
+            throw new IllegalArgumentException("Task is already completed");
+        }
+        task.setCompleted(true);
+        taskRepository.persist(task);
+    }
+
     private boolean isUserOwnerOfTask(User user, Task task) {
         return user.getId().equals(task.getUser().getId());
     }

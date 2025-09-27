@@ -256,4 +256,70 @@ class TaskServiceImplTest {
         verify(userRepository).findByEmail("another@example.com");
         verify(taskRepository).findByIdOptional(1L);
     }
+
+    @Test
+    @DisplayName("Should mark task as completed successfully when user is owner")
+    void shouldMarkTaskAsCompletedSuccessfully() {
+        // Given
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+        when(taskRepository.findByIdOptional(1L)).thenReturn(Optional.of(testTask));
+
+        // When
+        taskService.markAsCompleted(1L, "test@example.com");
+
+        // Then
+        assertThat(testTask.getCompleted()).isTrue();
+        verify(userRepository).findByEmail("test@example.com");
+        verify(taskRepository).findByIdOptional(1L);
+        verify(taskRepository).persist(testTask);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when marking task as completed and task is already completed")
+    void shouldThrowExceptionWhenMarkingAlreadyCompletedTask() {
+        // Given
+        testTask.setCompleted(true); // Task is already completed
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+        when(taskRepository.findByIdOptional(1L)).thenReturn(Optional.of(testTask));
+
+        // When & Then
+        assertThatThrownBy(() -> taskService.markAsCompleted(1L, "test@example.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Task is already completed");
+
+        verify(userRepository).findByEmail("test@example.com");
+        verify(taskRepository).findByIdOptional(1L);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when marking task as completed and user is not owner")
+    void shouldThrowExceptionWhenMarkingTaskAsCompletedWithNonOwnerUser() {
+        // Given
+        when(userRepository.findByEmail("another@example.com")).thenReturn(Optional.of(anotherUser));
+        when(taskRepository.findByIdOptional(1L)).thenReturn(Optional.of(testTask));
+
+        // When & Then
+        assertThatThrownBy(() -> taskService.markAsCompleted(1L, "another@example.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("User is not the owner of the task");
+
+        verify(userRepository).findByEmail("another@example.com");
+        verify(taskRepository).findByIdOptional(1L);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when marking non-existent task as completed")
+    void shouldThrowExceptionWhenMarkingNonExistentTaskAsCompleted() {
+        // Given
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+        when(taskRepository.findByIdOptional(999L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> taskService.markAsCompleted(999L, "test@example.com"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Task not found with id: 999");
+
+        verify(userRepository).findByEmail("test@example.com");
+        verify(taskRepository).findByIdOptional(999L);
+    }
 }

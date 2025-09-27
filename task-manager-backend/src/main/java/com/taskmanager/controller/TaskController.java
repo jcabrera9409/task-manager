@@ -187,4 +187,34 @@ public class TaskController {
                     .build();
         }
     }
+
+    /**
+     * Endpoint for mark task as completed by id and user email
+     */
+    @PUT
+    @Path("/{id}/complete")
+    @RolesAllowed("user")
+    public Response markTaskAsCompleted(@Context SecurityContext securityContext, @PathParam("id") Long id) {
+        try {
+            String userEmail = securityContext.getUserPrincipal().getName();
+            LOG.infof("Request to mark task with id: %d as completed for user: %s", id, userEmail);
+            taskService.markAsCompleted(id, userEmail);
+            APIResponseDTO<String> responseDTO = APIResponseDTO.success("Task marked as completed successfully", null, Response.Status.OK.getStatusCode());
+            return Response.status(Response.Status.OK)
+                    .entity(responseDTO)
+                    .build();
+        } catch (IllegalArgumentException e) {
+            LOG.errorf(e, "Error marking task as completed");
+            APIResponseDTO<String> responseDTO = APIResponseDTO.error(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode());
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(responseDTO)
+                    .build();
+        } catch (Exception e) {
+            LOG.errorf(e, "Error marking task as completed");
+            APIResponseDTO<String> responseDTO = APIResponseDTO.error("Internal server error", Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(responseDTO)
+                    .build();
+        }
+    }
 }

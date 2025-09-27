@@ -20,4 +20,9 @@ public interface ITaskService extends ICRUD<Task, Long> {
      * Delete task by id and user email
      */
     void deleteByIdAndUserEmail(Long id, String userEmail);
+
+    /**
+     * Mark task as completed
+     */
+    void markAsCompleted(Long id, String userEmail);
 }
