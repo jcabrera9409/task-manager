@@ -17,25 +17,8 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
-  dependencies:
-    needs: avoid_redundant
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "21"
-          cache: "maven"
-
-      - name: Download Maven dependencies
-        run: |
-          cd task-manager-backend
-          mvn dependency:go-offline
-
   unit_tests:
-    needs: dependencies
+    needs: avoid_redundant
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -63,6 +46,7 @@ jobs:
           mvn test
 
   trivy_scan:
+    needs: avoid_redundant
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -100,6 +84,7 @@ jobs:
   dockerize_and_push:
     needs: build
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
@@ -121,10 +106,25 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/task-manager-backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
       - name: Build and push Docker image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: task-manager-backend
           file: task-manager-backend/docker/Dockerfile.native-micro
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/task-manager-backend:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
