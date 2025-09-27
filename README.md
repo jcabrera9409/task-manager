@@ -31,8 +31,9 @@ This enterprise-grade task management system showcases modern full-stack develop
 - ✅ **Security Best Practices**: BCrypt password hashing and JWT token management
 
 ### 🏗️ Infrastructure & DevOps
-- ✅ **Containerization**: Multiple Docker deployment strategies (JVM, Native, Micro)
+- ✅ **Containerization**: Multiple Docker deployment strategies (JVM, Native, Micro) + Frontend nginx container
 - ✅ **Development Environment**: Complete Docker Compose setup with MySQL
+- ✅ **Production Ready**: Security-hardened containers with non-root users
 - ✅ **Build Automation**: Maven for backend, Angular CLI for frontend
 - ✅ **Performance Optimized**: Bundle optimization and lazy loading
 - ✅ **Environment Configuration**: Flexible configuration for development/production
@@ -1002,12 +1003,26 @@ docker build -f docker/Dockerfile.legacy-jar -t task-manager-legacy .
 ```bash
 cd task-manager-frontend
 
-# Production build with nginx
-docker build -t task-manager-frontend .
+# First, build the Angular application
+npm run build
 
-# With SSR support  
+# Build production Docker image with nginx (RECOMMENDED)
+docker build -f docker/Dockerfile -t task-manager-frontend .
+
+# Run the containerized frontend
+docker run -p 80:80 task-manager-frontend
+
+# With SSR support (optional)
+ng build --ssr
 docker build -f Dockerfile.ssr -t task-manager-frontend-ssr .
 ```
+
+**Frontend Docker Features:**
+- **Nginx 1.27 Alpine**: Lightweight and secure web server
+- **Security Hardening**: Non-root user (`webuser`) for enhanced security
+- **Process Management**: `dumb-init` for proper signal handling
+- **Optimized Size**: ~50MB total image size
+- **Production Ready**: Proper file permissions and ownership
 
 ### Performance Comparison
 
@@ -1016,7 +1031,7 @@ docker build -f Dockerfile.ssr -t task-manager-frontend-ssr .
 | **Micro Native** | ~20MB | <50ms | ~15MB | Production, Serverless |
 | **Standard Native** | ~50MB | ~100ms | ~30MB | Production, Cloud |
 | **JVM Mode** | ~200MB | ~3s | ~100MB | Development, Legacy |
-| **Frontend** | ~50MB | ~100ms | ~20MB | Static serving |
+| **Frontend (nginx)** | ~50MB | ~100ms | ~20MB | Static serving, Production |
 
 ### Production Deployment
 
@@ -1053,7 +1068,12 @@ services:
       - database
       
   frontend:
-    image: task-manager-frontend:latest  
+    image: task-manager-frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped  
     environment:
       API_URL: https://api.yourdomain.com/rest/api/v1
     ports:

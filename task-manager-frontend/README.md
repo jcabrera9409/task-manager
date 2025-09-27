@@ -102,6 +102,13 @@ For continuous integration environments:
 ./scripts/test-ci.sh
 ```
 
+**CI/CD Features:**
+- **Cross-platform testing**: Chrome headless for consistent results
+- **Coverage reporting**: Automatic generation of coverage reports
+- **Puppeteer integration**: Browser automation for reliable testing
+- **Parallel test execution**: Optimized for CI/CD pipelines
+- **Exit code handling**: Proper failure detection for automated workflows
+
 ## 📁 Project Structure
 
 ```
@@ -208,6 +215,74 @@ The application uses Angular services for state management:
 
 ## 🚀 Deployment
 
+### Docker Containerization
+
+The project includes a production-ready Dockerfile for containerized deployment using nginx.
+
+#### Building Docker Image
+
+1. **Build the Angular application**
+```bash
+npm run build
+```
+
+2. **Build Docker image**
+```bash
+docker build -f docker/Dockerfile -t task-manager-frontend .
+```
+
+3. **Run the container**
+```bash
+# Run on port 80 (production)
+docker run -p 80:80 task-manager-frontend
+
+# Run on custom port
+docker run -p 3000:80 task-manager-frontend
+```
+
+#### Docker Features
+
+- **Base Image**: `nginx:1.27-alpine` - Lightweight and secure
+- **Security Hardening**: 
+  - Non-root user (`webuser`) for enhanced security
+  - Proper file permissions and ownership
+  - Minimal attack surface with Alpine Linux
+- **Process Management**: 
+  - `dumb-init` for proper signal handling and zombie reaping
+  - Graceful shutdown support
+- **Performance**: 
+  - Optimized nginx configuration
+  - Static file serving with caching headers
+  - Small image size (~50MB)
+
+#### Docker Image Structure
+```dockerfile
+FROM nginx:1.27-alpine
+
+# Install process manager
+RUN apk add --no-cache dumb-init
+
+# Create non-root user
+RUN addgroup -S webgroup && \
+    adduser -S webuser -G webgroup
+
+# Copy built Angular app
+COPY --chown=webuser:webgroup dist/task-manager-frontend/browser/ /usr/share/nginx/html/
+
+# Set proper permissions
+RUN chown -R webuser:webgroup /var/cache/nginx && \
+    chown -R webuser:webgroup /var/log/nginx && \
+    chown -R webuser:webgroup /etc/nginx/conf.d && \
+    touch /var/run/nginx.pid && \
+    chown webuser:webgroup /var/run/nginx.pid
+
+USER webuser
+EXPOSE 80
+
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["nginx", "-g", "daemon off;"]
+```
+
 ### Environment Configuration
 Update `src/assets/env.js` for different environments:
 
@@ -222,6 +297,89 @@ window.__env.apiUrl = 'http://localhost:8080/rest/api/v1';
 window.__env.production = true;
 window.__env.apiUrl = 'https://your-api-domain.com/rest/api/v1';
 ```
+
+### Production Deployment
+
+#### Full Stack with Docker Compose
+
+Create a `docker-compose.yml` for full deployment:
+
+```yaml
+version: '3.8'
+services:
+  frontend:
+    image: task-manager-frontend:latest
+    ports:
+      - "80:80"
+    environment:
+      - NGINX_PORT=80
+    depends_on:
+      - backend
+    restart: unless-stopped
+    
+  backend:
+    image: task-manager-backend:latest
+    ports:
+      - "8080:8080"
+    environment:
+      USER_BD: ${DB_USER}
+      PASSWORD_BD: ${DB_PASSWORD}
+      DATASOURCE_BD: jdbc:mysql://database:3306/tmdb
+    depends_on:
+      - database
+      
+  database:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: tmdb
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+volumes:
+  mysql_data:
+```
+
+#### Cloud Deployment Options
+
+**AWS ECS/Fargate:**
+- Lightweight nginx container perfect for Fargate
+- Quick startup times and low resource usage
+- Ideal for auto-scaling scenarios
+
+**Google Cloud Run:**
+- Serverless deployment with pay-per-request model
+- Container-optimized with minimal resource requirements
+- Automatic HTTPS and global CDN
+
+**Azure Container Instances:**
+- Simple container deployment
+- Cost-effective for smaller workloads
+- Easy integration with Azure services
+
+#### Production Best Practices
+
+1. **Environment Variables**
+   - Set `window.__env.production = true`
+   - Configure proper API URLs
+   - Enable error tracking
+
+2. **Security Headers**
+   - Add custom nginx configuration for security headers
+   - Implement proper CORS settings
+   - Use HTTPS in production
+
+3. **Performance Optimization**
+   - Enable gzip compression in nginx
+   - Set appropriate cache headers
+   - Use CDN for static assets
+
+4. **Monitoring**
+   - Implement health checks
+   - Monitor nginx access and error logs
+   - Set up alerting for container failures
 
 ### Build Commands
 ```bash
@@ -285,6 +443,32 @@ ng serve --port 4201
 **Build memory issues**:
 ```bash
 ng build --max-old-space-size=8192
+```
+
+**Docker build fails**:
+```bash
+# Ensure Angular build completed successfully
+npm run build
+ls -la dist/task-manager-frontend/browser/
+
+# Build with verbose output
+docker build -f docker/Dockerfile -t task-manager-frontend . --no-cache
+```
+
+**Docker container not starting**:
+```bash
+# Check container logs
+docker logs <container-id>
+
+# Run with interactive shell for debugging
+docker run -it --entrypoint sh task-manager-frontend
+```
+
+**Nginx permission issues**:
+```bash
+# Verify file ownership in container
+docker run -it --entrypoint sh task-manager-frontend
+ls -la /usr/share/nginx/html/
 ```
 
 ## 📚 Additional Resources
