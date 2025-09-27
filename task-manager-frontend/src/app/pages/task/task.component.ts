@@ -5,11 +5,12 @@ import { TaskService } from '../../_service/task.service';
 import { LoaderComponent } from '../../shared/loader/loader.component';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { catchError, EMPTY, finalize, switchMap } from 'rxjs';
 import { NotificationService } from '../../_service/notification.service';
 import { Message } from '../../_model/message';
 import { Task } from '../../_model/task';
 import { TaskEditionDialogComponent } from '../../modals/task-edition-dialog/task-edition-dialog.component';
+import { ConfirmDataDTO } from '../../_model/dto';
 
 @Component({
   selector: 'app-task',
@@ -45,10 +46,41 @@ export class TaskComponent implements OnInit{
     })
   }
 
-  openDeleteDialog() {
-    this.dialog.open(ConfirmDialogComponent, {
-      data: null
-    })
+  openCompleteDialog(task: Task) {
+    const confirmData: ConfirmDataDTO = {
+      title: 'Confirmar Completado',
+      message: '¿Estás seguro de que deseas marcar esta tarea como completada?',
+      confirmText: 'Completar',
+      cancelText: 'Cancelar'
+    };
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: confirmData
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.markAsCompleted(task);
+      }
+    }); 
+  }
+
+
+  openDeleteDialog(task: Task) {
+    const confirmData: ConfirmDataDTO = {
+      title: 'Confirmar Eliminación',
+      message: '¿Estás seguro de que deseas eliminar esta tarea?',
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar'
+    };
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: confirmData
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.deleteTask(task);
+      }
+    });
   }
 
   openEditDialog(task: Task) {
@@ -69,6 +101,76 @@ export class TaskComponent implements OnInit{
       }
     });
     this.totalTasks = this.tasks.length;
+  }
+
+  private markAsCompleted(task: Task) {
+    this.isLoading = true;
+    this.taskService.markAsCompleted(task.id)
+      .pipe(
+        catchError(error => {
+          this.notificationService.setMessageChange(
+            Message.error('Ocurrió un error al procesar la solicitud.', error)
+          )
+          return EMPTY;
+        }),
+        switchMap(() => this.taskService.getAll()),
+        catchError(error => {
+          this.notificationService.setMessageChange(
+            Message.error('Ocurrió un error al listar las tareas.', error)
+          )
+          return EMPTY;
+        }),
+        finalize(() => {
+          this.isLoading = false;
+        })
+      )
+      .subscribe((response) => {
+        if (response.success) {
+          this.taskService.setObjectChange(response.data);
+          this.notificationService.setMessageChange(
+            Message.success('Tarea marcada como completada.')
+          );
+        } else {
+          this.notificationService.setMessageChange(
+            Message.error('Error al marcar la tarea como completada.', response.message)
+          );
+        }
+      });
+  }
+
+  private deleteTask(task: Task) {
+    this.isLoading = true;
+    this.taskService.delete(task.id)
+      .pipe(
+        catchError(error => {
+          this.notificationService.setMessageChange(
+            Message.error('Ocurrió un error al procesar la solicitud.', error)
+          )
+          return EMPTY;
+        }),
+        switchMap(() => this.taskService.getAll()),
+        catchError(error => {
+          this.notificationService.setMessageChange(
+            Message.error('Ocurrió un error al listar las tareas.', error)
+          )
+          return EMPTY;
+        }),
+        finalize(() => {
+          this.isLoading = false;
+        })
+      )
+      .subscribe((response) => {
+        if (response.success) {
+          this.taskService.setObjectChange(response.data);
+          this.notificationService.setMessageChange(
+            Message.success('Tarea eliminada correctamente.')
+          );
+        } else {
+          this.notificationService.setMessageChange(
+            Message.error('Error al eliminar la tarea.', response.message)
+          );
+        }
+      });
   }
 
   private getAllTasks() {

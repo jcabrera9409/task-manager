@@ -41,6 +41,10 @@ export class TaskService {
     return this.http.delete<APIResponseDTO<void>>(`${this.url}/${id}`);
   }
 
+  markAsCompleted(id: number) {
+    return this.http.put<APIResponseDTO<void>>(`${this.url}/${id}/complete`, {});
+  }
+
   getObjectChange() {
     return this.objectChange.asObservable();
   }
