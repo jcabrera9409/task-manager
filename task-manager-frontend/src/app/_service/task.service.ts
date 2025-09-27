@@ -34,7 +34,7 @@ export class TaskService {
   }
 
   update(task: Task) {
-    return this.http.put<APIResponseDTO<Task>>(`${this.url}/${task.id}`, task);
+    return this.http.put<APIResponseDTO<Task>>(this.url, task);
   }
 
   delete(id: number) {

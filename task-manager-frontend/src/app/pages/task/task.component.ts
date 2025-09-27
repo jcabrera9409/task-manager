@@ -9,6 +9,7 @@ import { finalize } from 'rxjs';
 import { NotificationService } from '../../_service/notification.service';
 import { Message } from '../../_model/message';
 import { Task } from '../../_model/task';
+import { TaskEditionDialogComponent } from '../../modals/task-edition-dialog/task-edition-dialog.component';
 
 @Component({
   selector: 'app-task',
@@ -50,7 +51,16 @@ export class TaskComponent implements OnInit{
     })
   }
 
+  openEditDialog(task: Task) {
+    this.dialog.open(TaskEditionDialogComponent, {
+      data: task,
+      panelClass: 'w-1/3',
+    });
+  }
+
   private completeStatistics() {
+    this.completedTasks = 0;
+    this.pendingTasks = 0;
     this.tasks.forEach(task => {
       if (task.completed) {
         this.completedTasks++;
