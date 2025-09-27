@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { TaskEditionDialogComponent } from '../../modals/task-edition-dialog/task-edition-dialog.component';
+import { AuthService } from '../../_service/auth.service';
 
 @Component({
   selector: 'app-layout',
@@ -13,6 +14,7 @@ import { TaskEditionDialogComponent } from '../../modals/task-edition-dialog/tas
 export class LayoutComponent {
 
   constructor(
+    private authService: AuthService, 
     private dialog: MatDialog
   ) { }
 
@@ -22,5 +24,9 @@ export class LayoutComponent {
       data: null,
       panelClass: 'w-1/3',
     });
+  }
+
+  onLogout() {
+    this.authService.logout();
   }
 }
