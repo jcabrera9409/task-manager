@@ -116,6 +116,10 @@ src/main/java/com/taskmanager/
 - **Security Hardening** - Enhanced JWT validation and user authorization
 - **Code Quality** - Improved code structure and documentation
 - **Performance** - Optimized database queries and service methods
+- **Docker Optimization** - Streamlined to single production-ready native micro image
+  - Removed deprecated JVM, legacy JAR, and standard native Dockerfiles
+  - Focus on ultra-optimized micro image (~20-50MB) for production deployment
+  - Enhanced security with non-root user and minimal attack surface
 
 #### 📋 API Enhancements
 - **New Endpoint**: `PUT /rest/api/v1/tasks/{id}/complete`
@@ -439,35 +443,35 @@ mvn package -Dnative
 mvn package -Dnative -Dquarkus.native.container-build=true
 ```
 
-**Then build the Docker images:**
+**Then build the Docker image:**
 
 ```bash
-# Ultra-optimized micro image (~20-50MB)
-docker build -f docker/Dockerfile.native-micro -t task-manager-micro .
-
-# Standard native image (~50-100MB)
-docker build -f docker/Dockerfile.native -t task-manager-native .
-
-# JVM image (development, ~200MB)
-docker build -f docker/Dockerfile.jvm -t task-manager-jvm .
-
-# Legacy JAR image
-docker build -f docker/Dockerfile.legacy-jar -t task-manager-legacy .
+# Ultra-optimized micro image (~20-50MB) - PRODUCTION READY
+docker build -f docker/Dockerfile.native-micro -t task-manager-backend .
 ```
 
-**Run Docker containers:**
+**Docker Image Features:**
+- **Ultra-lightweight**: Based on `ubi9-quarkus-micro-image:2.0`
+- **Security hardened**: Non-root user (uid 1001)
+- **Production optimized**: Minimal attack surface and dependencies
+- **Fast startup**: <50ms with native compilation
+- **Small footprint**: ~20-50MB total image size
+
+**Run the Docker container:**
 
 ```bash
-# Run micro image
-docker run -i --rm -p 8080:8080 task-manager-micro
+# Run the container
+docker run -i --rm -p 8080:8080 task-manager-backend
 
-# Run with environment variables
+# Run with environment variables for database connection
 docker run -i --rm -p 8080:8080 \
   -e USER_BD=root \
   -e PASSWORD_BD=root \
   -e DATASOURCE_BD=jdbc:mysql://host.docker.internal:3306/tmdb \
-  task-manager-micro
+  task-manager-backend
 ```
+
+> **Note**: The deprecated JVM, legacy JAR, and standard native Dockerfiles have been removed in favor of the optimized micro image for production use.
 
 ## 🔒 Security
 
