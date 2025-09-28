@@ -1,21 +1,22 @@
 # 📋 Task Manager - Full Stack Application
 
-A complete task management application built with modern technologies, featuring Angular 17 frontend, Quarkus backend API, JWT authentication, and containerized deployment. This project demonstrates production-ready full-stack development with comprehensive testing, security, and performance optimizations.
+A complete task management application built with modern technologies, featuring Angular 18 frontend, Quarkus backend API, JWT authentication, and containerized deployment. This project demonstrates production-ready full-stack development with comprehensive testing, security, and performance optimizations.
 
 ## 🌟 Project Overview
 
 This enterprise-grade task management system showcases modern full-stack development practices with:
 
-### 🎨 Frontend (Angular 17)
-- ✅ **Modern Angular Architecture**: Angular 17 with standalone components and signals
-- ✅ **Responsive Material Design**: Angular Material + TailwindCSS with mobile-first approach
+### 🎨 Frontend (Angular 18)
+- ✅ **Modern Angular Architecture**: Angular 18 with standalone components and enhanced signals
+- ✅ **Responsive Material Design**: Angular Material 18 + TailwindCSS with mobile-first approach
+- ✅ **Material 3 Design System**: Updated theming system with Material 3 (M3) components
 - ✅ **JWT Authentication**: Secure authentication with route guards and token management
 - ✅ **Server-Side Rendering**: Angular Universal SSR for improved SEO and performance
 - ✅ **Real-time Dashboard**: Interactive task management with live updates
 - ✅ **Advanced Modal System**: Configurable dialogs with DTO-based configuration
 - ✅ **Robust Error Handling**: RxJS operators for comprehensive error management
 - ✅ **Progressive Web App**: PWA capabilities with offline support
-- ✅ **Comprehensive Testing**: 55+ unit tests with 80%+ coverage target using Karma + Jasmine + Puppeteer
+- ✅ **Comprehensive Testing**: 114 unit tests with 98.85% coverage using Karma + Jasmine + Puppeteer
 - ✅ **CI/CD Ready**: Cross-platform testing with Chrome headless automation
 
 ### ⚡ Backend (Quarkus + Java 21)
@@ -164,7 +165,7 @@ The pipeline creates semantic tags for better version management:
 
 ```
 task-manager/
-├── task-manager-frontend/           # Angular 17 Web Application
+├── task-manager-frontend/           # Angular 18 Web Application
 │   ├── src/app/
 │   │   ├── pages/                  # Main pages (login, dashboard, layout)
 │   │   │   ├── login/              # JWT authentication page
@@ -278,7 +279,7 @@ task-manager/
 - **Java 21** or higher (LTS recommended)
 - **Node.js 18+** with npm 9+
 - **Docker & Docker Compose** for database and containers
-- **Angular CLI 17.x**: `npm install -g @angular/cli`
+- **Angular CLI 18.x**: `npm install -g @angular/cli@18`
 
 ### 1. Repository Setup
 
@@ -2983,5 +2984,45 @@ If you find this project helpful, please consider giving it a star ⭐ on GitHub
 - **Watch** the repository for notifications about new releases
 - **Fork** the repository to contribute your improvements
 - **Follow** the project roadmap in GitHub Issues
+
+---
+
+## 📝 Changelog
+
+### Version 2.0 - Angular 18 Migration (September 2025)
+
+#### 🚀 Major Updates
+- **Angular 18 Migration**: Complete upgrade from Angular 17 to Angular 18.2.x
+- **Material 3 Design System**: Updated theming system using Material 3 (M3) components
+- **Enhanced Performance**: Improved build times and runtime performance
+- **Dependency Resolution**: Fixed ERESOLVE conflicts and aligned all dependencies
+
+#### 🔧 Technical Changes
+- **Frontend Dependencies**:
+  - `@angular/core`: 17.3.0 → 18.2.0
+  - `@angular/material`: 17.3.10 → 18.2.0
+  - `@angular-devkit/build-angular`: 17.3.11 → 18.2.0
+  - All Angular packages aligned to version 18.2.x
+
+- **Theme System Migration**:
+  - Migrated from legacy Material theme API to Material 3 theme system
+  - Updated `custom-theme.scss` with new `mat.define-theme()` syntax
+  - Implemented proper selector wrapping for M3 themes
+
+- **Testing Improvements**:
+  - Increased test coverage: 114 tests with 98.85% coverage
+  - Fixed CI/CD pipeline dependency conflicts
+  - Enhanced cross-platform testing reliability
+
+#### 🐛 Bug Fixes
+- Resolved `npm error code ERESOLVE` dependency conflicts
+- Fixed Angular Material theming compilation errors
+- Improved build stability across different environments
+
+#### 🏆 Benefits
+- **Better Performance**: Faster development builds and improved runtime
+- **Modern UI**: Access to latest Material Design 3 components
+- **Future-Proof**: Better compatibility with upcoming Angular versions
+- **Stability**: Resolved all dependency conflicts for reliable CI/CD
 
 **Thank you for using Task Manager! Happy coding! 🚀**
