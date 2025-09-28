@@ -12,7 +12,7 @@ services:
       - ./mysql-data:/var/lib/mysql
   
   backend:
-    image: task-manager-micro:latest
+    image: jcabrera9409/task-manager-backend:latest
     restart: always
     container_name: backend
     environment:
@@ -26,3 +26,12 @@ services:
     volumes:
       - ./privateKey.pem:/work/privateKey.pem
       - ./publicKey.pem:/work/publicKey.pem
+
+  frontend:
+    image: jcabrera9409/task-manager-frontend:latest
+    restart: always
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
