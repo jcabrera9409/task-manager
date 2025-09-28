@@ -3,7 +3,13 @@ name: Backend CI Pipeline
 on:
   push:
     branches: [main]
-    paths: ["task-manager-backend/**", ".github/workflows/pipeline-backend.yml"]
+    paths:
+      [
+        "task-manager-backend/src/**",
+        "task-manager-backend/docker/**",
+        "task-manager-backend/pom.xml",
+        ".github/workflows/pipeline-backend.yml",
+      ]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
@@ -54,11 +60,11 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          scan-type: 'fs'
-          scan-ref: 'task-manager-backend/'
+          scan-type: "fs"
+          scan-ref: "task-manager-backend/"
           ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-          scanners: 'vuln' 
+          severity: "CRITICAL,HIGH"
+          scanners: "vuln"
 
   build:
     needs: [unit_tests, trivy_scan]
@@ -76,7 +82,7 @@ jobs:
         run: |
           cd task-manager-backend
           mvn package -Dnative -Dquarkus.native.container-build=true -DskipTests
-      
+
       - uses: actions/upload-artifact@v4
         with:
           name: build-artifact
