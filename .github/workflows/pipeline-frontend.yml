@@ -32,6 +32,7 @@ jobs:
       - name: Run Unit Tests
         run: |
           cd task-manager-frontend
+          npm ci
           npm run test:ci
     
   trivy_scan:
