@@ -20,10 +20,10 @@
 # To use UBI 8, switch to `quay.io/quarkus/quarkus-micro-image:2.0`.
 ###
 # Etapa 1: Build nativo
-FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21 AS build
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 WORKDIR /project
 COPY . .
-RUN mvn clean package -Dnative -DskipTests
+RUN mvn package -Dnative -Dquarkus.native.container-build=true -DskipTests
 
 # Etapa 2: Runtime
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
