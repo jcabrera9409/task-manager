@@ -81,8 +81,13 @@ jobs:
       - name: Build
         run: |
           cd task-manager-backend
-          mvn clean package -Dnative -Dquarkus.native.container-build=true -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-graalvmce-builder-image:jdk-21 -DskipTests
-
+          mvn clean package \
+                  -Dnative \
+                  -Dquarkus.native.container-build=true \
+                  -Dquarkus.native.builder-image=quay.io/quarkus/ubi-quarkus-graalvmce-builder-image:jdk-21 \
+                  -Dquarkus.native.additional-build-args="--march=compatibility" \
+                  -DskipTests
+                  
       - uses: actions/upload-artifact@v4
         with:
           name: build-artifact
