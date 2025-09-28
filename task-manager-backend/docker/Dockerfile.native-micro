@@ -20,10 +20,22 @@
 # To use UBI 8, switch to `quay.io/quarkus/quarkus-micro-image:2.0`.
 ###
 # Etapa 1: Build nativo
-FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:23.1-java21 AS build
+FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21 AS build
+USER root
+RUN microdnf update -y && \
+    microdnf install -y wget tar gzip && \
+    wget -O /tmp/maven.tar.gz https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz && \
+    tar xzf /tmp/maven.tar.gz -C /opt && \
+    ln -s /opt/apache-maven-3.9.6 /opt/maven && \
+    ln -s /opt/maven/bin/mvn /usr/local/bin/mvn && \
+    rm /tmp/maven.tar.gz && \
+    microdnf clean all
+
+ENV PATH="/opt/maven/bin:${PATH}"
 WORKDIR /project
 COPY . .
-RUN mvn package -Dnative -Dquarkus.native.container-build=true -DskipTests
+RUN chown -R root:root /project && \
+    mvn package -Dnative -DskipTests
 
 # Etapa 2: Runtime
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
