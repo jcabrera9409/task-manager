@@ -1,0 +1,73 @@
+name: Frontend CI Pipeline
+
+on:
+    push:
+        branches: [main]
+        paths: ["task-manager-frontend/**",".github/workflows/pipeline-frontend.yml"]
+    pull_request:
+        branches: [main]
+        types: [opened, synchronize, reopened]
+
+jobs:
+    avoid_redundant:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Cancel Previous Runs
+              uses: styfle/cancel-workflow-action@0.9.1
+              with:
+                  access_token: ${{ github.token }}
+
+    unit_tests:
+        needs: avoid_redundant
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                node-version: 20
+                cache: 'npm'
+                cache-dependency-path: task-manager-frontend/package-lock.json
+
+            - name: Run Unit Tests
+              run: |
+                  cd task-manager-frontend
+                  npm run test:ci
+    
+    trivy_scan:
+        needs: avoid_redundant
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Run Trivy vulnerability scanner
+              uses: aquasecurity/trivy-action@0.28.0
+              with:
+                scan-type: 'fs'
+                scan-ref: 'task-manager-frontend/'
+                ignore-unfixed: true
+                severity: 'CRITICAL,HIGH'
+                scanners: 'vuln'
+
+    build:
+        needs: [unit_tests, trivy_scan]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                node-version: 20
+                cache: 'npm'
+                cache-dependency-path: task-manager-frontend/package-lock.json
+
+            - name: Build
+              run: |
+                cd task-manager-frontend
+                npm ci
+                npx ng build 
+            
+            - uses: actions/upload-artifact@v4
+              with:
+                name: build-artifact
+                path: task-manager-frontend/dist/task-manager-frontend/browser
