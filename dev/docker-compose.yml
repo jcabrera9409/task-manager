@@ -15,7 +15,6 @@ services:
     image: jcabrera9409/task-manager-backend:latest
     restart: always
     container_name: backend
-    platform: linux/amd64
     environment:
       - USER_BD=root
       - PASSWORD_BD=root

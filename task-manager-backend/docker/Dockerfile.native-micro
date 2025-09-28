@@ -20,27 +20,20 @@
 # To use UBI 8, switch to `quay.io/quarkus/quarkus-micro-image:2.0`.
 ###
 # Etapa 1: Build nativo
-FROM quay.io/quarkus/ubi-quarkus-mandrel-builder-image:jdk-21 AS build
-USER root
-RUN microdnf update -y && \
-    microdnf install -y wget tar gzip && \
-    wget -O /tmp/maven.tar.gz https://archive.apache.org/dist/maven/maven-3/3.9.6/binaries/apache-maven-3.9.6-bin.tar.gz && \
-    tar xzf /tmp/maven.tar.gz -C /opt && \
-    ln -s /opt/apache-maven-3.9.6 /opt/maven && \
-    ln -s /opt/maven/bin/mvn /usr/local/bin/mvn && \
-    rm /tmp/maven.tar.gz && \
-    microdnf clean all
-
-ENV PATH="/opt/maven/bin:${PATH}"
-WORKDIR /project
-COPY . .
-RUN chown -R root:root /project && \
-    mvn package -Dnative -DskipTests
+FROM quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-21 AS build
+COPY --chown=quarkus:quarkus --chmod=0755 mvnw /code/mvnw
+COPY --chown=quarkus:quarkus .mvn /code/.mvn
+COPY --chown=quarkus:quarkus pom.xml /code/
+USER quarkus
+WORKDIR /code
+RUN ./mvnw -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline
+COPY src /code/src
+RUN ./mvnw package -Dnative -DskipTests
 
 # Etapa 2: Runtime
 FROM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
 WORKDIR /work/
-COPY --from=build /project/target/*-runner /work/application
+COPY --from=build /code/target/*-runner /work/application
 RUN chmod 755 /work/application
 USER 1001
 EXPOSE 8080
