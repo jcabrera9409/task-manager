@@ -61,8 +61,15 @@ jobs:
   build:
     needs: [unit_tests, trivy_scan]
     runs-on: ubuntu-latest
+    environment: ${{ 
+        github.ref == 'refs/heads/main' && 'production'
+      }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup Environment File
+        run: |
+          echo "${{ vars.FRONTEND_ENVIRONMENTS }}" > task-manager-frontend/src/assets/env.js
 
       - uses: actions/setup-node@v4
         with:
@@ -74,7 +81,7 @@ jobs:
         run: |
           cd task-manager-frontend
           npm ci
-          npx ng build
+          npx ng build --configuration=production
 
       - uses: actions/upload-artifact@v4
         with:
@@ -84,7 +91,6 @@ jobs:
   dockerize_and_push:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
