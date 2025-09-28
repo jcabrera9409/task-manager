@@ -105,7 +105,6 @@ jobs:
           images: ${{ secrets.DOCKER_USERNAME }}/task-manager-frontend
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
