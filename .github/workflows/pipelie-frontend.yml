@@ -71,3 +71,5 @@ jobs:
               with:
                 name: build-artifact
                 path: task-manager-frontend/dist/task-manager-frontend/browser
+
+                
