@@ -82,7 +82,7 @@ jobs:
       - name: Build Native Binary
         run: |
           cd task-manager-backend
-          mvn package -Dnative -DskipTests
+          mvn package -Dnative -DskipTests -Dquarkus.native.additional-build-args="--initialize-at-run-time=io.netty.handler.codec.http.HttpObjectEncoder,--no-fallback,-O1"
 
       - uses: actions/upload-artifact@v4
         with:
