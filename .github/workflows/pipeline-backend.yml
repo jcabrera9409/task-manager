@@ -72,16 +72,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - uses: graalvm/setup-graalvm@v1
         with:
-          distribution: "temurin"
-          java-version: "21"
-          cache: "maven"
+          distribution: 'graalvm'
+          java-version: '21'
+          cache: 'maven'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build
+      - name: Build Native Binary
         run: |
           cd task-manager-backend
-          mvn package -Dnative -Dquarkus.native.container-build=true -DskipTests
+          mvn package -Dnative -DskipTests
 
       - uses: actions/upload-artifact@v4
         with:
