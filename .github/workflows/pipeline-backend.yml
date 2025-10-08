@@ -104,6 +104,9 @@ jobs:
           name: build-artifact
           path: task-manager-backend/target
 
+      - name: List files in target directory
+        run: ls -la task-manager-backend/target
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
