@@ -9,7 +9,6 @@ spec:
   resources:
     requests:
       storage: 10Gi
-  storageClassName: managed-csi # AKS default storage class
 ---
 apiVersion: apps/v1
 kind: Deployment

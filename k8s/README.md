@@ -12,8 +12,10 @@ The deployment consists of the following components:
 
 1. **Namespace**: Isolated environment for the application
 2. **MySQL Database**: Containerized MySQL 8.0 instance
-3. **Persistent Storage**: Persistent volume for database data
-4. **Secrets Management**: Secure storage for database credentials
+3. **Backend API**: Task Manager backend service with JWT authentication
+4. **Persistent Storage**: Persistent volume for database data
+5. **Secrets Management**: Secure storage for database credentials
+6. **JWT Keys**: ConfigMap for JWT public and private keys
 
 ## Files Structure
 
@@ -23,6 +25,7 @@ k8s/
 ├── .env                         # Environment variables for secrets
 ├── 00.namespace.yaml           # Namespace definition
 ├── 01.mysql.yaml              # MySQL deployment, service, and PVC
+├── 02.backend.yaml             # Backend API deployment, service, and JWT keys
 └── kustomization.yaml          # Kustomize configuration
 ```
 
@@ -89,9 +92,16 @@ deployment.apps/mysql created (dry run)
 k8s/
 ├── README.md                    # This documentation file
 ├── .env                         # Environment variables for secrets
+├── .env.example                 # Example environment file
+├── .gitignore                   # Git ignore rules
 ├── 00.namespace.yaml           # Namespace definition
 ├── 01.mysql.yaml              # MySQL deployment, service, and PVC
-└── kustomization.yaml          # Kustomize configuration (FIXED)
+├── 02.backend.yaml             # Backend API deployment, service, and JWT keys
+├── kustomization.yaml          # Kustomize configuration (FIXED)
+├── deploy.sh                   # 🚀 Main deployment script (Opción 1)
+├── cleanup.sh                  # 🧹 Cleanup script
+├── setup-jwt-keys.sh           # Alternative: Setup JWT keys (Opción 4)
+└── generate-jwt-configmap.sh   # Alternative: Generate ConfigMap (Opción 2)
 ```
 
 ## Prerequisites
@@ -103,29 +113,32 @@ Before deploying this configuration, ensure you have:
 - `kustomize` installed (or use `kubectl apply -k`)
 - Appropriate storage class available in your cluster
 
-## Quick Start
+## Quick Start (Opción 1: Kustomize con rutas relativas)
 
-### 1. Configuration Status ✅
+### ✅ **Configuración Actual: LISTA PARA USAR**
 
-**Good news!** The critical configuration issues have been resolved:
-- ✅ Fixed file references in `kustomization.yaml`
-- ✅ Removed references to non-existent files
-- ✅ Configuration now passes validation (`kubectl apply --dry-run=client -k .`)
+La configuración está optimizada para usar Kustomize con rutas relativas a las claves JWT.
 
-### 2. Deploy the Infrastructure
-
-The configuration is now ready for deployment:
+### 🚀 **Despliegue Simple**
 
 ```bash
-# Navigate to the k8s directory
+# 1. Navegar al directorio k8s
 cd k8s/
 
-# Apply the configuration using kustomize
-kubectl apply -k .
+# 2. Verificar/crear archivo .env
+cp .env.example .env
+# Editar .env con credenciales seguras
 
-# Or apply individual files
-kubectl apply -f 00.namespace.yaml
-kubectl apply -f 01.mysql.yaml
+# 3. Desplegar todo con un comando
+./deploy.sh
+# O manualmente: kubectl apply -k .
+```
+
+### 🧹 **Limpieza**
+
+```bash
+# Eliminar todo el despliegue
+./cleanup.sh
 ```
 
 ### 3. Verify Deployment
@@ -137,11 +150,17 @@ kubectl get all -n test
 # Check persistent volume claims
 kubectl get pvc -n test
 
-# Check secrets
-kubectl get secrets -n test
+# Check secrets and configmaps
+kubectl get secrets,configmaps -n test
 
-# Check pod logs
+# Check pod logs for MySQL
 kubectl logs -n test deployment/mysql
+
+# Check pod logs for Backend
+kubectl logs -n test deployment/task-manager-backend
+
+# Port forward to access backend locally (optional)
+kubectl port-forward -n test service/task-manager-backend-service 8080:8080
 ```
 
 ## Resource Details
@@ -188,6 +207,91 @@ MYSQL_PASSWORD=user
 MYSQL_DATABASE=tmdb
 ```
 
+### Backend API Configuration (02.backend.yaml)
+
+The Task Manager backend API is deployed with the following configuration:
+
+#### 1. ConfigMap for JWT Keys
+- **Name**: `jwt-keys`
+- **Contains**: 
+  - `privateKey.pem`: JWT private key for token signing
+  - `publicKey.pem`: JWT public key for token verification
+- **Mount Path**: `/app/keys` in the container
+
+#### 2. Deployment
+- **Image**: `jcabrera9409/task-manager-backend:latest`
+- **Replicas**: 1
+- **Port**: 8080
+- **Environment Variables**:
+  - `MYSQL_USER`, `MYSQL_PASSWORD`, `DATASOURCE_DATABASE`: From MySQL secret
+  - `DATASOURCE_HOST`: `mysql-service` (service discovery)
+  - `DATASOURCE_PORT`: `3306`
+  - `JWT_PUBLIC_KEY_PATH`: `/app/keys/publicKey.pem`
+  - `JWT_PRIVATE_KEY_PATH`: `/app/keys/privateKey.pem`
+- **Volume Mounts**: JWT keys mounted from ConfigMap
+- **Resource Limits**: 
+  - Memory: 256Mi-512Mi
+  - CPU: 250m-500m
+- **Health Checks**: 
+  - Liveness: `/q/health/live` (Quarkus health endpoint)
+  - Readiness: `/q/health/ready` (Quarkus health endpoint)
+
+#### 3. Service
+- **Name**: `task-manager-backend-service`
+- **Type**: ClusterIP
+- **Port**: 8080
+- **Target Port**: 8080
+
+### JWT Keys Configuration
+
+**⚠️ Importante**: Las claves JWT NO están hardcodeadas en los archivos YAML por seguridad.
+
+Tienes varias opciones para configurar las claves JWT:
+
+#### Opción 1: Kustomize con rutas relativas (Recomendado)
+```bash
+# Las claves se referencian desde ../dev/ en kustomization.yaml
+kubectl apply -k .
+```
+
+#### Opción 2: Generar ConfigMap por separado
+```bash
+# Ejecutar el script para generar el ConfigMap
+./generate-jwt-configmap.sh
+
+# Aplicar el ConfigMap generado
+kubectl apply -f jwt-configmap.yaml
+
+# Luego aplicar el resto (sin kustomize)
+kubectl apply -f 00.namespace.yaml
+kubectl apply -f 01.mysql.yaml  
+kubectl apply -f 02.backend.yaml
+```
+
+#### Opción 3: Crear ConfigMap manualmente
+```bash
+kubectl create configmap jwt-keys \
+  --from-file=privateKey.pem=../dev/privateKey.pem \
+  --from-file=publicKey.pem=../dev/publicKey.pem \
+  -n test
+```
+
+#### Opción 4: Enlaces simbólicos locales
+```bash
+# Ejecutar script de configuración
+./setup-jwt-keys.sh
+
+# Modificar kustomization.yaml para usar archivos locales
+# Luego aplicar
+kubectl apply -k .
+```
+
+Las claves se montan en el contenedor en:
+- **Private Key**: `/app/keys/privateKey.pem`
+- **Public Key**: `/app/keys/publicKey.pem`
+
+**Security Note**: En producción, considera usar Kubernetes Secrets en lugar de ConfigMap para las claves JWT.
+
 ## Monitoring and Troubleshooting
 
 ### Common Commands
@@ -196,28 +300,44 @@ MYSQL_DATABASE=tmdb
 # Check pod status
 kubectl get pods -n test
 
-# View pod logs
+# View pod logs for MySQL
 kubectl logs -n test -l app=mysql
 
-# Describe deployment for detailed information
+# View pod logs for Backend
+kubectl logs -n test -l app=task-manager-backend
+
+# Describe deployments for detailed information
 kubectl describe deployment mysql -n test
+kubectl describe deployment task-manager-backend -n test
 
 # Check persistent volume status
 kubectl get pv
 kubectl describe pvc mysql-pvc -n test
 
+# Check services
+kubectl get services -n test
+
 # Execute commands in the MySQL container
 kubectl exec -it -n test deployment/mysql -- mysql -u root -p
+
+# Test backend health endpoints (requires port-forward)
+kubectl port-forward -n test service/task-manager-backend-service 8080:8080
+# Then in another terminal: curl http://localhost:8080/q/health
 ```
 
 ### Health Checks
 
-The MySQL deployment includes:
-
+**MySQL Deployment:**
 - **Liveness Probe**: Checks if the container is running (30s initial delay, 10s interval)
 - **Readiness Probe**: Checks if the container is ready to serve traffic (5s initial delay, 5s interval)
+- **Command**: `mysqladmin ping`
 
-Both probes use `mysqladmin ping` command.
+**Backend API Deployment:**
+- **Liveness Probe**: Checks if the application is running (30s initial delay, 10s interval)
+- **Readiness Probe**: Checks if the application is ready to serve traffic (10s initial delay, 5s interval)
+- **Endpoints**: 
+  - Liveness: `GET /q/health/live`
+  - Readiness: `GET /q/health/ready`
 
 ## Scaling and Performance
 
@@ -290,7 +410,7 @@ This MySQL instance is configured to work with the Task Manager application. The
 3. **Monitoring**: Add monitoring and alerting for the database
 4. **Backup Strategy**: Implement automated backup solutions
 5. **High Availability**: Consider multi-replica setup for production
-6. **Application Integration**: Deploy the Task Manager backend and frontend components
+6. **Application Integration**: ✅ **COMPLETED** - Deploy the Task Manager backend component
 
 ## Support and Troubleshooting
 

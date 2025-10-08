@@ -68,7 +68,7 @@ jobs:
 
   build:
     needs: [unit_tests, trivy_scan]
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -90,7 +90,7 @@ jobs:
 
   dockerize_and_push:
     needs: build
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
