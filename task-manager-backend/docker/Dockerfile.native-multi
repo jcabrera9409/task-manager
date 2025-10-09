@@ -26,11 +26,12 @@ COPY --chown=quarkus:quarkus src /code/src
 
 # Build native executable for target platform
 RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-        ./mvnw package -Dnative -DskipTests -Dquarkus.native.container-build=true \
-        -Dquarkus.native.builder-image=quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-21 \
+        ./mvnw package -Dnative -DskipTests \
+        -Dquarkus.profile=docker \
         -Dquarkus.native.additional-build-args="--target=aarch64-linux-gnu"; \
     else \
-        ./mvnw package -Dnative -DskipTests -Dquarkus.native.container-build=true; \
+        ./mvnw package -Dnative -DskipTests \
+        -Dquarkus.profile=docker; \
     fi
 
 ## Stage 2: Runtime image
