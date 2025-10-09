@@ -68,7 +68,7 @@ jobs:
 
   build:
     needs: [unit_tests, trivy_scan]
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -82,7 +82,7 @@ jobs:
       - name: Build Native Binary
         run: |
           cd task-manager-backend
-          mvn package -Dnative -DskipTests -Dquarkus.native.additional-build-args="--initialize-at-run-time=io.netty.handler.codec.http.HttpObjectEncoder,--no-fallback,-O1"
+          mvn package -Dnative -DskipTests
 
       - uses: actions/upload-artifact@v4
         with:
