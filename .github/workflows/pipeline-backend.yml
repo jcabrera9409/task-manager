@@ -66,46 +66,30 @@ jobs:
           severity: "CRITICAL,HIGH"
           scanners: "vuln"
 
-  build:
-    needs: [unit_tests, trivy_scan]
+
+  dockerize_and_push:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: graalvm/setup-graalvm@v1
+      - uses: actions/setup-java@v4
         with:
-          distribution: 'graalvm'
-          java-version: '21'
-          cache: 'maven'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          distribution: "temurin"
+          java-version: "21"
+          cache: "maven"
 
-      - name: Build Native Binary
+      - name: Build
         run: |
           cd task-manager-backend
-          mvn package -Dnative -DskipTests
+          mvn package -Dnative -Dquarkus.native.container-build=true -DskipTests
 
       - uses: actions/upload-artifact@v4
         with:
           name: build-artifact
           path: task-manager-backend/target/*-runner
 
-  dockerize_and_push:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Create target directory
-        run: mkdir -p task-manager-backend/target
-
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: build-artifact
-          path: task-manager-backend/target
-
-      - name: List files in target directory
-        run: ls -la task-manager-backend/target
+      - name: List files
+        run: ls -la task-manager-backend/target/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -134,6 +118,4 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
