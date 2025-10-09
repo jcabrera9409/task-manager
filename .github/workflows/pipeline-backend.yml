@@ -66,24 +66,36 @@ jobs:
           severity: "CRITICAL,HIGH"
           scanners: "vuln"
 
-
-  dockerize_and_push:
+  build:
     needs: [unit_tests, trivy_scan]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "21"
-          cache: "maven"
-      
-      - name: Install Wrapper
+      - name: Build Native Binary
         run: |
-          cd task-manager-backend  
-          mvn wrapper:wrapper
-          ./mvnw --version
+          cd task-manager-backend
+          mvn package -Dnative -Dquarkus.native.container-build=true -DskipTests
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: task-manager-backend/target/*-runner
+
+  dockerize_and_push:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create target directory
+        run: mkdir -p task-manager-backend/target
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifact
+          path: task-manager-backend/target
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -108,12 +120,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: task-manager-backend
-          file: task-manager-backend/docker/Dockerfile.native-multi
+          file: task-manager-backend/docker/Dockerfile.native-micro
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            platform=linux/amd64
