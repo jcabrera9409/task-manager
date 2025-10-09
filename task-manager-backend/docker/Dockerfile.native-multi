@@ -1,0 +1,56 @@
+####
+# Multi-architecture native Dockerfile
+# This Dockerfile builds native executables for different architectures
+# and creates the appropriate image for each platform
+####
+
+## Stage 1: Build native executable based on target platform
+FROM --platform=$BUILDPLATFORM quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-21 AS build
+
+# Build arguments for cross-compilation
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+
+# Copy source code
+COPY --chown=quarkus:quarkus mvnw /code/mvnw
+COPY --chown=quarkus:quarkus .mvn /code/.mvn
+COPY --chown=quarkus:quarkus pom.xml /code/
+USER quarkus
+WORKDIR /code
+
+# Download dependencies
+RUN ./mvnw -B org.apache.maven.plugins:maven-dependency-plugin:3.8.1:go-offline
+
+# Copy source
+COPY --chown=quarkus:quarkus src /code/src
+
+# Build native executable for target platform
+RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        ./mvnw package -Dnative -DskipTests -Dquarkus.native.container-build=true \
+        -Dquarkus.native.builder-image=quay.io/quarkus/ubi9-quarkus-mandrel-builder-image:jdk-21 \
+        -Dquarkus.native.additional-build-args="--target=aarch64-linux-gnu"; \
+    else \
+        ./mvnw package -Dnative -DskipTests -Dquarkus.native.container-build=true; \
+    fi
+
+## Stage 2: Runtime image
+FROM --platform=$TARGETPLATFORM quay.io/quarkus/ubi9-quarkus-micro-image:2.0
+
+WORKDIR /work/
+
+# Set up permissions
+RUN chown 1001 /work \
+    && chmod "g+rwX" /work \
+    && chown 1001:root /work
+
+# Copy the native executable
+COPY --from=build --chown=1001:root --chmod=0755 /code/target/*-runner /work/application
+
+# Expose port
+EXPOSE 8080
+
+# Run as non-root user
+USER 1001
+
+# Start the application
+ENTRYPOINT ["./application", "-Dquarkus.http.host=0.0.0.0"]

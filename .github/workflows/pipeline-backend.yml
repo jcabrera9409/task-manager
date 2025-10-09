@@ -68,28 +68,10 @@ jobs:
 
 
   dockerize_and_push:
+    needs: [unit_tests, trivy_scan]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "21"
-          cache: "maven"
-
-      - name: Build
-        run: |
-          cd task-manager-backend
-          mvn package -Dnative -Dquarkus.native.container-build=true -DskipTests
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: build-artifact
-          path: task-manager-backend/target/*-runner
-
-      - name: List files
-        run: ls -la task-manager-backend/target/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -114,8 +96,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: task-manager-backend
-          file: task-manager-backend/docker/Dockerfile.native-micro
+          file: task-manager-backend/docker/Dockerfile.native-multi
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
