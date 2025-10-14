@@ -22,32 +22,28 @@ spec:
         - containerPort: 8080
           name: http
         env:
-        - name: MYSQL_USER
+        - name: USER_BD
           valueFrom:
             secretKeyRef:
               name: mysql-secret
               key: MYSQL_USER
-        - name: MYSQL_PASSWORD
+        - name: PASSWORD_BD
           valueFrom:
             secretKeyRef:
               name: mysql-secret
               key: MYSQL_PASSWORD
-        - name: DATASOURCE_DATABASE
+        - name: DATASOURCE_BD
           valueFrom:
             secretKeyRef:
               name: mysql-secret
               key: DATASOURCE_DATABASE
         - name: JWT_PUBLIC_KEY_PATH
-          value: "/work/publicKey.pem"
+          value: "/app/keys/publicKey.pem"
         - name: JWT_PRIVATE_KEY_PATH
-          value: "/work/privateKey.pem"
-        - name: DATASOURCE_HOST
-          value: "mysql-service"
-        - name: DATASOURCE_PORT
-          value: "3306"
+          value: "/app/keys/privateKey.pem"
         volumeMounts:
         - name: jwt-keys-volume
-          mountPath: /work
+          mountPath: /app/keys
           readOnly: true
         resources:
           requests:
@@ -56,20 +52,6 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /q/health/live
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-        readinessProbe:
-          httpGet:
-            path: /q/health/ready
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
       volumes:
       - name: jwt-keys-volume
         configMap:
