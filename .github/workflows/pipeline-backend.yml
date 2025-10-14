@@ -14,6 +14,8 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened]
 
+  workflow_dispatch:
+
 jobs:
   avoid_redundant:
     runs-on: ubuntu-latest
