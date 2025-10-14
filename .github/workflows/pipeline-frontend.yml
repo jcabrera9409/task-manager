@@ -71,7 +71,7 @@ jobs:
 
       - name: Setup Environment File
         run: |
-          echo "${{ secrets.FRONTEND_ENVIRONMENTS || '' }}" > task-manager-frontend/src/assets/env.js
+          echo "${{ vars.FRONTEND_ENVIRONMENTS || '' }}" > task-manager-frontend/src/assets/env.js
 
       - uses: actions/setup-node@v4
         with:
